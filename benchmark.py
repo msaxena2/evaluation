@@ -1,6 +1,5 @@
 __author__ = 'manasvi'
-
-
+from utils import Info
 class Tool:
 
     def __init__(self, benchmark_location):
@@ -18,4 +17,7 @@ class Tool:
     def cleanup(self):
         pass
 
+if __name__ == '__main__':
+    info = Info("utils.csv")
+    info.get_spec_dict()
 
