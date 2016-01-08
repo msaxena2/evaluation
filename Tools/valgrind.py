@@ -10,9 +10,9 @@ class Valgrind(Tool):
 
     def init(self):
         os.chdir(os.path.expanduser(self.benchmark_path))
-        subprocess.check_call(["autoreconf", "--install"])
-        subprocess.check_call(["autoconf"])
+        subprocess.check_call(["./bootstrap"])
         subprocess.check_call(["automake"])
+        subprocess.check_call(["autoconf"])
         subprocess.check_call(["./configure"])
         subprocess.check_call(["make"])
 
