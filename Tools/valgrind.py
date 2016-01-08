@@ -5,8 +5,10 @@ import subprocess
 
 class Valgrind(Tool):
 
-    def run(self):
-        pass
+    def run(self, verbose=False, log_location=None):
+        for i in xrange(1, len(self.info.get_spec_dict().keys())):
+            print i
+
 
     def init(self):
         os.chdir(os.path.expanduser(self.benchmark_path))
