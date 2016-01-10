@@ -11,13 +11,13 @@ class Valgrind(Tool):
         for i in xrange(1, len(spec_dict.keys()) + 1):
             output_dict[i] = {"count": spec_dict[i]["count"], "TP": 0, "FN": 0}
             for j in range(i, spec_dict[i]["count"]):
-                arg = str('%03d' % i) + str('%02d' % j)
+                arg = str('%03d' % i) + str('%03d' % j)
                 output = subprocess.check_call(["valgrind", "./01.w_Defects/01_w_Defects", arg])
                 if output != 0:
-                    spec_dict[i]["TP"] += 1
+                    output_dict[i]["TP"] += 1
                 output = subprocess.check_call(["valgrind", "./02.wo_Defects/02_wo_Defects", arg])
                 if output == 0:
-                    spec_dict["FN"] += 1
+                    output_dict[i]["FN"] += 1
         print spec_dict
 
     def init(self):
