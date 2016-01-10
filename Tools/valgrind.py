@@ -6,9 +6,19 @@ import subprocess
 class Valgrind(Tool):
 
     def run(self, verbose=False, log_location=None):
-        for i in xrange(1, len(self.info.get_spec_dict().keys())):
-            print i
-
+        output_dict = {}
+        spec_dict = self.info.get_spec_dict()
+        for i in xrange(1, len(spec_dict.keys()) + 1):
+            output_dict[i] = {"count": spec_dict[i]["count"], "TP": 0, "FN": 0}
+            for j in range(i, spec_dict[i]["count"]):
+                arg = str('%03d' % i) + str('%02d' % j)
+                output = subprocess.check_call(["valgrind", "./01.w_Defects/01_w_Defects", arg])
+                if output != 0:
+                    spec_dict[i]["TP"] += 1
+                output = subprocess.check_call(["valgrind", "./02.wo_Defects/02_wo_Defects", arg])
+                if output == 0:
+                    spec_dict["FN"] += 1
+        print spec_dict
 
     def init(self):
         os.chdir(os.path.expanduser(self.benchmark_path))

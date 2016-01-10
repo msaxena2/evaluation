@@ -46,4 +46,6 @@
 46,Uninitialized pointer,Pointer related,16,16
 47,Uninitialized variable,Misc,15,15
 48,Unlock without lock,Concurrency,8,8
+49,Unused variable,Inappropriate code,7,7
 50,Wrong arguments passed to a function pointer,Pointer related,18,18
+51,Division by zero,Numerical,16,16
