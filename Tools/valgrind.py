@@ -17,7 +17,7 @@ class Valgrind(Tool):
                 except subprocess.CalledProcessError:
                     output_dict[i]["TP"] += 1
                 try:
-                    output_wo = subprocess.check_call(["valgrind", "error-exitcode=-1","./02.wo_Defects/02_wo_Defects", arg])
+                    output_wo = subprocess.check_call(["valgrind", "--error-exitcode=-1","./02.wo_Defects/02_wo_Defects", arg])
                     # Update Data record
                 except subprocess.CalledProcessError:
                     output_dict[i]["FN"] += 1
