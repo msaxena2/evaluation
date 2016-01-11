@@ -13,7 +13,7 @@ class Valgrind(Tool):
             for j in range(i, spec_dict[i]["count"]):
                 arg = str('%03d' % i) + str('%03d' % j)
                 try:
-                    output_w = subprocess.check_call(["valgrind", "./01.w_Defects/01_w_Defects", arg])
+                    output_w = subprocess.check_call(["valgrind", "--error-exitcode=-1" "./01.w_Defects/01_w_Defects", arg])
                 except subprocess.CalledProcessError:
                     output_dict[i]["TP"] += 1
                 try:
