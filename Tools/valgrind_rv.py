@@ -79,8 +79,8 @@ class ValgrindRV(Tool):
         return output_dict, error_code_dict, total
 
     def simple_valgrind(self, output_dict, total):
-        print "% True Positives (Valgrind): " + str(float(output_dict["valgrind"]["TP"])/(total/2) * 100)
-        print "% False Poistives (Valgrind): " + str(float(output_dict["valgrind"]["FP"])/(total/2) * 100)
+        print "% true positives (valgrind): " + str(float(output_dict["valgrind"]["tp"])/(total/2) * 100)
+        print "% false positives (valgrind): " + str(float(output_dict["valgrind"]["fp"])/(total/2) * 100)
 
     def gcc_valgrind(self, output_dict, total):
         print "% True Positives (GCC + Valgrind): " + str(float(output_dict["valgrind"]["TP"] + output_dict["gcc"]["TP"])/(total/2) * 100)
