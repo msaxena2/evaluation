@@ -24,8 +24,8 @@ class CompcertRV(Tool):
             file_list = os.listdir(os.getcwd())
             for c_file in filter(lambda y : y.endswith(".c"), file_list):
                 unsupported_set = set()
-                if "link" in file:
-                    unsupported_set.append('-'.join(c_file.split('-')[:1]))
+                if "link" in c_file:
+                    unsupported_set.add('-'.join(c_file.split('-')[:1]))
                     continue
                 if "-good" in c_file:
                     error_code = c_file.split("-good")[0]
@@ -38,7 +38,7 @@ class CompcertRV(Tool):
                 signal.signal(signal.SIGALRM, self.signal_handler)
                 signal.alarm(100)
                 try:
-                    command = ["ccomp", "-interp", "-trace", c_file]
+                    command = ["ccomp", "-fstruct-passing", "-interp", "-trace", c_file]
                     print command
                     subprocess.check_call(command)
                 except subprocess.CalledProcessError:
@@ -53,7 +53,7 @@ class CompcertRV(Tool):
                 finally:
                     signal.alarm(0)
             os.chdir(self.benchmark_path)
-        return output_dict, error_code_dict, total
+        return output_dict, error_code_dict
 
 
     def tabulate(self, error_code_dict):
@@ -70,9 +70,9 @@ class CompcertRV(Tool):
         output_dict, error_dict = self.run()
         # Hacky; Needs Change
         total = 312
-        print "Total Tests Run: " + total
-        print "% true positives (valgrind): " + str(float(output_dict["tp"])/(total/2) * 100)
-        print "% false positives (valgrind): " + str(float(output_dict["fp"])/(total/2) * 100)
+        print "Total Tests Run: " + str(total)
+        print "% true positives (valgrind): " + str(float(output_dict["TP"])/(total/2) * 100)
+        print "% false positives (valgrind): " + str(float(output_dict["FP"])/(total/2) * 100)
         self.tabulate(error_dict)
 
 

@@ -8,13 +8,13 @@ from tabulate import tabulate
 class TimeoutException(Exception):
     pass
 
-class ValgrindRV(Tool):
+class UBSanRV(Tool):
 
     def signal_handler(self, signum, frame):
         raise TimeoutException("Timed out!")
 
     def run(self, verbose=False, log_location=None):
-        output_dict = {"gcc": {"TP": 0, "FP": 0}, "valgrind": {"TP": 0, "FP": 0}}
+        output_dict = {"compile": {"TP": 0, "FP": 0}, "runtime": {"TP": 0, "FP": 0}}
         error_code_dict = {}
         total = 0
         os.chdir(self.benchmark_path)
@@ -57,14 +57,14 @@ class ValgrindRV(Tool):
                 signal.alarm(5)
                 try:
                     mode = "compile"
-                    command = ["clang", "-g", "-fsanitize=undefined", "-std=c11"] + c_files + ["-o", out_name]
-                    print command
-                    subprocess.check_call(command)
+                    command = ["clang", "-Wpedantic", "-Wall", "-Wextra", "-g", "-fsanitize=undefined", "-std=c11"] + c_files + ["-o", out_name]
+                    #print command
+                    subprocess.check_output(command, stderr=subprocess.STDOUT)
                     mode = "runtime"
                     val_command = ["./" + out_name]
-                    print val_command
-                    subprocess.check_output(val_command)
-                except subprocess.CalledProcessError:
+                    #print val_command
+                    subprocess.check_output(val_command, stderr=subprocess.STDOUT)
+                except subprocess.CalledProcessError as error:
                     if is_bad:
                         output_dict[mode]["TP"] += 1
                         error_code_dict[error_code]["TP"] = mode
@@ -83,8 +83,8 @@ class ValgrindRV(Tool):
         print "% false positives (runtime): " + str(float(output_dict["runtime"]["FP"])/(total/2) * 100)
 
     def compile_clang(self, output_dict, total):
-        print "% True Positives (GCC + Valgrind): " + str(float(output_dict["compile"]["TP"])/(total/2) * 100)
-        print "% False Poistives (GCC + Valgrind): " + str(float(output_dict["compile"]["FP"])/(total/2) * 100)
+        print "% True Positives (compile): " + str(float(output_dict["compile"]["TP"])/(total/2) * 100)
+        print "% False Poistives (compile): " + str(float(output_dict["compile"]["FP"])/(total/2) * 100)
     def init(self):
         pass
 
