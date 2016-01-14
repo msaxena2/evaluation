@@ -8,7 +8,7 @@ from tabulate import tabulate
 class TimeoutException(Exception):
     pass
 
-class UBSanRV(Tool):
+class FramaCRV(Tool):
 
     def signal_handler(self, signum, frame):
         raise TimeoutException("Timed out!")
@@ -55,16 +55,20 @@ class UBSanRV(Tool):
                 signal.signal(signal.SIGALRM, self.signal_handler)
                 signal.alarm(5)
                 try:
-                    command = ["frama-c", "-val"] + c_files + ["-then", "-werror"]
+                    command = ["frama-c", "-val"] + c_files
                     #print command
-                    subprocess.check_output(command, stderr=subprocess.STDOUT)
+                    output = subprocess.check_output(command, stderr=subprocess.STDOUT)
+                    if "warning" in output and c_file in output:
+                        print output
+                        if is_bad:
+                            output_dict["TP"] += 1
+                            error_code_dict[error_code]["TP"] = mode
+                        else:
+                            output_dict["FP"] += 1
+                            error_code_dict[error_code]["FP"] = mode
                 except subprocess.CalledProcessError as error:
-                    if is_bad:
-                        output_dict["TP"] += 1
-                        error_code_dict[error_code]["TP"] = mode
-                    else:
-                        output_dict["FP"] += 1
-                        error_code_dict[error_code]["FP"] = mode
+                    # Problem with the plugin
+                    pass
                 except TimeoutException:
                     pass
                 finally:
@@ -74,8 +78,8 @@ class UBSanRV(Tool):
 
 
     def framac_data(self, output_dict, total):
-        print "% True Positives (compile): " + str(float(output_dict["compile"]["TP"])/(total/2) * 100)
-        print "% False Poistives (compile): " + str(float(output_dict["compile"]["FP"])/(total/2) * 100)
+        print "% True Positives (FramaC): " + str(float(output_dict["TP"])/(total/2) * 100)
+        print "% False Poistives (FramaC): " + str(float(output_dict["FP"])/(total/2) * 100)
 
     def init(self):
         pass

@@ -3,6 +3,7 @@ from Tools.valgrind import Valgrind
 from Tools.valgrind_rv import ValgrindRV
 from Tools.compcert_rv import CompcertRV
 from Tools.ub_san_rv import UBSanRV
+from Tools.frama_c_rv import FramaCRV
 import sys
 
 if __name__ == '__main__':
@@ -16,5 +17,9 @@ if __name__ == '__main__':
       #valgrind.analyze()
         #compcert = CompcertRV(sys.argv[1])
         #compcert.analyze()
-        ubsan = UBSanRV(sys.argv[1])
-        ubsan.analyze()
+        #ubsan = UBSanRV(sys.argv[1])
+        #ubsan.analyze()
+
+        framac = FramaCRV(sys.argv[1])
+        framac.analyze()
+
