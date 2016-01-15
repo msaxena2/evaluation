@@ -1,4 +1,4 @@
-from tool import Tool
+from Tools.tool import Tool
 from utils import Info
 import os
 import subprocess

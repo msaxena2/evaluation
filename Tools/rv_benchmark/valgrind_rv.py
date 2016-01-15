@@ -1,5 +1,5 @@
 __author__ = 'manasvi'
-from tool import Tool
+from Tools.tool import Tool
 import os
 import subprocess32 as subprocess
 import signal
