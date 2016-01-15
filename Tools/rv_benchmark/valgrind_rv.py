@@ -1,13 +1,16 @@
 __author__ = 'manasvi'
-from Tools.tool import Tool
 import os
-import subprocess32 as subprocess
 import signal
+
+import subprocess32 as subprocess
+
+from Tools.rv_benchmark.tool import Tool
+
 
 class TimeoutException(Exception):
     pass
 
-class UBSanRV(Tool):
+class ValgrindRV(Tool):
 
     def signal_handler(self, signum, frame):
         raise TimeoutException("Timed out!")
@@ -19,7 +22,6 @@ class UBSanRV(Tool):
         os.chdir(self.benchmark_path)
         for dir in filter(lambda x : os.path.isdir(x), os.listdir(os.getcwd())):
             os.chdir(dir)
-            print "In Directory: " + os.getcwd()
             file_list = os.listdir(os.getcwd())
             for c_file in filter(lambda y : y.endswith(".c"), file_list):
                 c_files = []
@@ -64,10 +66,10 @@ class UBSanRV(Tool):
                 except subprocess.CalledProcessError as error:
                     if is_bad:
                         output_dict["TP"] += 1
-                        error_code_dict[error_code]["TP"] = self.name
+                        error_code_dict[error_code]["TP"] = set(self.name)
                     else:
                         output_dict["FP"] += 1
-                        error_code_dict[error_code]["FP"] = self.name
+                        error_code_dict[error_code]["FP"] = set(self.name)
                 except TimeoutException:
                     pass
                 finally:

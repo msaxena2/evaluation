@@ -1,7 +1,9 @@
-from Tools.tool import Tool
-from utils import Info
 import os
 import subprocess
+
+from Tools.rv_benchmark.tool import Tool
+from utils import Info
+
 
 class Valgrind(Tool):
 

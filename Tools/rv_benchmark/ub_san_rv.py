@@ -1,33 +1,36 @@
 __author__ = 'manasvi'
-from Tools.tool import Tool
 import os
-import subprocess32 as subprocess
 import signal
+
+import subprocess32 as subprocess
+
+from Tools.rv_benchmark.tool import Tool
+
 
 class TimeoutException(Exception):
     pass
 
-class UBSanRV(Tool):
 
+class UBSanRV(Tool):
     def signal_handler(self, signum, frame):
         raise TimeoutException("Timed out!")
 
     def run(self, verbose=False, log_location=None):
-        output_dict =  {"TP": 0, "FP": 0}
+        output_dict = {"TP": 0, "FP": 0}
         error_code_dict = {}
         total = 0
         os.chdir(self.benchmark_path)
-        for dir in filter(lambda x : os.path.isdir(x), os.listdir(os.getcwd())):
+        for dir in filter(lambda x: os.path.isdir(x), os.listdir(os.getcwd())):
             os.chdir(dir)
             print "In Directory: " + os.getcwd()
             file_list = os.listdir(os.getcwd())
-            for c_file in filter(lambda y : y.endswith(".c"), file_list):
+            for c_file in filter(lambda y: y.endswith(".c"), file_list):
                 c_files = []
                 exec_name = c_file.split('.')[0]
                 if "link" in c_file:
                     if "link1" not in c_file:
                         continue
-                    exec_name = exec_name.replace("-link1", "",)
+                    exec_name = exec_name.replace("-link1", "", )
                     c_files.append(c_file)
                     i = 2
                     while True:
@@ -40,7 +43,6 @@ class UBSanRV(Tool):
                         break
                 else:
                     c_files = [c_file]
-
 
                 out_name = exec_name + ".out"
                 total += 1
@@ -55,20 +57,21 @@ class UBSanRV(Tool):
                 signal.signal(signal.SIGALRM, self.signal_handler)
                 signal.alarm(5)
                 try:
-                    command = ["clang", "-Wpedantic", "-Wall", "-Wextra", "-g", "-fsanitize=undefined", "-std=c11"] + c_files + ["-o", out_name]
-                    #print command
+                    command = ["clang", "-Wpedantic", "-Wall", "-Wextra", "-g", "-fsanitize=undefined",
+                               "-std=c11"] + c_files + ["-o", out_name]
+                    # print command
                     subprocess.check_output(command, stderr=subprocess.STDOUT)
                     mode = "runtime"
                     val_command = ["./" + out_name]
-                    #print val_command
+                    # print val_command
                     subprocess.check_output(val_command, stderr=subprocess.STDOUT)
                 except subprocess.CalledProcessError as error:
                     if is_bad:
                         output_dict["TP"] += 1
-                        error_code_dict[error_code]["TP"] = self.name
+                        error_code_dict[error_code]["TP"] = set(self.name)
                     else:
                         output_dict["FP"] += 1
-                        error_code_dict[error_code]["FP"] = self.name
+                        error_code_dict[error_code]["FP"] = set(self.name)
                 except TimeoutException:
                     pass
                 finally:
@@ -96,7 +99,6 @@ class UBSanRV(Tool):
         self.numbers_dict = None
         self.name = "UB San"
         self.total = None
-
 
     def cleanup(self):
         Tool.cleanup(self)

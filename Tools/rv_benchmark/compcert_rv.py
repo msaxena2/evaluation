@@ -1,9 +1,10 @@
 __author__ = 'manasvi'
-from Tools.tool import Tool
 import os
-import subprocess32 as subprocess
 import signal
-from tabulate import tabulate
+
+import subprocess32 as subprocess
+
+from Tools.rv_benchmark.tool import Tool
 
 
 class TimeoutException(Exception):
@@ -21,19 +22,12 @@ class CompcertRV(Tool):
         os.chdir(self.benchmark_path)
         for dir in filter(lambda x: os.path.isdir(x), os.listdir(os.getcwd())):
             os.chdir(dir)
-            print "In Directory: " + os.getcwd()
             file_list = os.listdir(os.getcwd())
             for c_file in filter(lambda y: y.endswith(".c"), file_list):
                 if "link" in c_file:
                     continue
-
                 total += 1
-                if "-good" in c_file:
-                    error_code = c_file.split("-good")[0]
-                    is_bad = False
-                else:
-                    error_code = c_file.split("-bad")[0]
-                    is_bad = True
+                error_code = self.get_error_code(c_file)
                 if error_code not in error_code_dict:
                     error_code_dict[error_code] = {"TP": " ", "FP": " "}
                 signal.signal(signal.SIGALRM, self.signal_handler)
@@ -44,12 +38,12 @@ class CompcertRV(Tool):
                     output = subprocess.check_output(command, stderr=subprocess.STDOUT)
                     if "warning" in output and c_file in output:
                         print output
-                        if is_bad:
+                        if "bad" in c_file:
                             output_dict["TP"] += 1
-                            error_code_dict[error_code]["TP"] = self.name
+                            error_code_dict[error_code]["TP"] = set(self.name)
                         else:
                             output_dict["FP"] += 1
-                            error_code_dict[error_code]["FP"] = self.name
+                            error_code_dict[error_code]["FP"] = set(self.name)
                 except subprocess.CalledProcessError as error:
                     # Problem with the plugin
                     pass

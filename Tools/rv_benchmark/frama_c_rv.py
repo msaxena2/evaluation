@@ -1,9 +1,10 @@
 __author__ = 'manasvi'
-from Tools.tool import Tool
 import os
-import subprocess32 as subprocess
 import signal
-from tabulate import tabulate
+
+import subprocess32 as subprocess
+
+from Tools.rv_benchmark.tool import Tool
 
 
 class TimeoutException(Exception):
@@ -61,10 +62,10 @@ class FramaCRV(Tool):
                         print output
                         if is_bad:
                             output_dict["TP"] += 1
-                            error_code_dict[error_code]["TP"] = self.name
+                            error_code_dict[error_code]["TP"] = set(self.name)
                         else:
                             output_dict["FP"] += 1
-                            error_code_dict[error_code]["FP"] = self.name
+                            error_code_dict[error_code]["FP"] = set(self.name)
                 except subprocess.CalledProcessError as error:
                     # Problem with the plugin
                     pass
