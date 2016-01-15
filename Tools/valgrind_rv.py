@@ -3,18 +3,17 @@ from tool import Tool
 import os
 import subprocess32 as subprocess
 import signal
-from tabulate import tabulate
 
 class TimeoutException(Exception):
     pass
 
-class ValgrindRV(Tool):
+class UBSanRV(Tool):
 
     def signal_handler(self, signum, frame):
         raise TimeoutException("Timed out!")
 
     def run(self, verbose=False, log_location=None):
-        output_dict = {"gcc": {"TP": 0, "FP": 0}, "valgrind": {"TP": 0, "FP": 0}}
+        output_dict =  {"TP": 0, "FP": 0}
         error_code_dict = {}
         total = 0
         os.chdir(self.benchmark_path)
@@ -56,54 +55,46 @@ class ValgrindRV(Tool):
                 signal.signal(signal.SIGALRM, self.signal_handler)
                 signal.alarm(5)
                 try:
-                    mode = "gcc"
-                    command = ["gcc", "-g", "-pthread", "-Werror", "-Wpedantic", "-std=c11"] + c_files + ["-o", out_name]
-                    print command
-                    subprocess.check_call(command)
-                    mode = "valgrind"
-                    val_command = ["valgrind", "--error-exitcode=-1", "./" + out_name]
-                    print val_command
-                    subprocess.check_output(val_command)
-                except subprocess.CalledProcessError:
+                    command = ["gcc", "-Wpedantic", "-Werror", "-Wall", "-Wextra", "-g", "-Wno-unused-variable", "-std=c11"] + c_files + ["-o", out_name]
+                    #print command
+                    subprocess.check_output(command, stderr=subprocess.STDOUT)
+                    val_command = ["./" + out_name]
+                    #print val_command
+                    subprocess.check_output(val_command, stderr=subprocess.STDOUT)
+                except subprocess.CalledProcessError as error:
                     if is_bad:
-                        output_dict[mode]["TP"] += 1
-                        error_code_dict[error_code]["TP"] = mode
+                        output_dict["TP"] += 1
+                        error_code_dict[error_code]["TP"] = self.name
                     else:
-                        output_dict[mode]["FP"] += 1
-                        error_code_dict[error_code]["FP"] = mode
+                        output_dict["FP"] += 1
+                        error_code_dict[error_code]["FP"] = self.name
                 except TimeoutException:
                     pass
                 finally:
                     signal.alarm(0)
             os.chdir(self.benchmark_path)
-        return output_dict, error_code_dict, total
+        self.numbers_dict = output_dict
+        self.errors_dict = error_code_dict
+        self.total = total
 
-    def simple_valgrind(self, output_dict, total):
-        print "% true positives (valgrind): " + str(float(output_dict["valgrind"]["tp"])/(total/2) * 100)
-        print "% false positives (valgrind): " + str(float(output_dict["valgrind"]["fp"])/(total/2) * 100)
+    def get_numbers(self):
+        return {
+            "TP": str(float(self.numbers_dict["TP"]) / (self.total / 2) * 100),
+            "FP": str(float(self.numbers_dict["FP"]) / (self.total / 2) * 100)
+        }
 
-    def gcc_valgrind(self, output_dict, total):
-        print "% True Positives (GCC + Valgrind): " + str(float(output_dict["valgrind"]["TP"] + output_dict["gcc"]["TP"])/(total/2) * 100)
-        print "% False Poistives (GCC + Valgrind): " + str(float(output_dict["valgrind"]["FP"] + output_dict["gcc"]["FP"])/(total/2) * 100)
-    def init(self):
-        pass
+    def get_errors(self):
+        return self.errors_dict
 
-    def tabulate(self, error_code_dict):
-        table = []
-        for key in error_code_dict.keys():
-            table.append([key, error_code_dict[key]["TP"], error_code_dict[key]["FP"]])
-        print tabulate(table, headers=["Error-Code", "TP", "FP"], tablefmt="fancy_grid")
-
+    def get_tool_name(self):
+        return self.name
 
     def __init__(self, benchmark_path):
         self.benchmark_path = os.path.expanduser(benchmark_path)
-
-    def analyze(self):
-        output_dict, error_dict, total = self.run()
-        print "Total Tests Run: " + str(total)
-        self.simple_valgrind(output_dict, total)
-        self.gcc_valgrind(output_dict, total)
-        self.tabulate(error_dict)
+        self.errors_dict = None
+        self.numbers_dict = None
+        self.name = "Valgrind + GCC"
+        self.total = None
 
 
     def cleanup(self):

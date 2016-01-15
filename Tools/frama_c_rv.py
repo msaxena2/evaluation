@@ -42,8 +42,6 @@ class FramaCRV(Tool):
                         break
                 else:
                     c_files = [c_file]
-                mode = "frama-c"
-
                 total += 1
                 if "-good" in c_file:
                     error_code = c_file.split("-good")[0]
@@ -63,10 +61,10 @@ class FramaCRV(Tool):
                         print output
                         if is_bad:
                             output_dict["TP"] += 1
-                            error_code_dict[error_code]["TP"] = mode
+                            error_code_dict[error_code]["TP"] = self.name
                         else:
                             output_dict["FP"] += 1
-                            error_code_dict[error_code]["FP"] = mode
+                            error_code_dict[error_code]["FP"] = self.name
                 except subprocess.CalledProcessError as error:
                     # Problem with the plugin
                     pass
@@ -87,7 +85,7 @@ class FramaCRV(Tool):
         }
 
     def get_tool_name(self):
-        return "frama-c"
+        return self.name
 
     def get_errors(self):
         return self.errors_dict
@@ -97,6 +95,7 @@ class FramaCRV(Tool):
         self.numbers_dict = {}
         self.errors_dict = {}
         self.total = None
+        self.name = "Frama-C"
 
     def analyze(self):
         pass

@@ -11,15 +11,19 @@ import sys
 def merge(dict1, dict2):
     retdict = {}
     for key in dict1.keys():
+        if key not in retdict:
+            retdict[key] = set([])
         if key in dict2:
-            retdict[key] = {"TP": set(dict1[key]["TP"]) | set(dict2[key]["TP"]),
-                            "FP": set(dict1[key]["FP"]) | set(dict2[key]["FP"])}
+            retdict[key].add(dict1[key])
+            retdict[key].add(dict2[key])
         else:
             retdict[key] = dict1[key]
 
     for key in dict2.keys():
+        if key not in retdict:
+            retdict[key] = set([])
         if key not in dict1:
-            retdict[key] = dict2[key]
+            retdict[key].add(dict2[key])
 
     return retdict
 
