@@ -3,7 +3,6 @@ from tool import Tool
 import os
 import subprocess32 as subprocess
 import signal
-from tabulate import tabulate
 
 class TimeoutException(Exception):
     pass
@@ -14,7 +13,7 @@ class UBSanRV(Tool):
         raise TimeoutException("Timed out!")
 
     def run(self, verbose=False, log_location=None):
-        output_dict = {"compile": {"TP": 0, "FP": 0}, "runtime": {"TP": 0, "FP": 0}}
+        output_dict =  {"TP": 0, "FP": 0}
         error_code_dict = {}
         total = 0
         os.chdir(self.benchmark_path)
@@ -56,7 +55,6 @@ class UBSanRV(Tool):
                 signal.signal(signal.SIGALRM, self.signal_handler)
                 signal.alarm(5)
                 try:
-                    mode = "compile"
                     command = ["clang", "-Wpedantic", "-Wall", "-Wextra", "-g", "-fsanitize=undefined", "-std=c11"] + c_files + ["-o", out_name]
                     #print command
                     subprocess.check_output(command, stderr=subprocess.STDOUT)
@@ -66,44 +64,38 @@ class UBSanRV(Tool):
                     subprocess.check_output(val_command, stderr=subprocess.STDOUT)
                 except subprocess.CalledProcessError as error:
                     if is_bad:
-                        output_dict[mode]["TP"] += 1
-                        error_code_dict[error_code]["TP"] = mode
+                        output_dict["TP"] += 1
+                        error_code_dict[error_code]["TP"] = self.name
                     else:
-                        output_dict[mode]["FP"] += 1
-                        error_code_dict[error_code]["FP"] = mode
+                        output_dict["FP"] += 1
+                        error_code_dict[error_code]["FP"] = self.name
                 except TimeoutException:
                     pass
                 finally:
                     signal.alarm(0)
             os.chdir(self.benchmark_path)
-        return output_dict, error_code_dict, total
+        self.numbers_dict = output_dict
+        self.errors_dict = error_code_dict
+        self.total = total
 
-    def runtime_clang(self, output_dict, total):
-        print "% true positives (runtime): " + str(float(output_dict["runtime"]["TP"])/(total/2) * 100)
-        print "% false positives (runtime): " + str(float(output_dict["runtime"]["FP"])/(total/2) * 100)
+    def get_numbers(self):
+        return {
+            "TP": str(float(self.numbers_dict["TP"]) / (self.total / 2) * 100),
+            "FP": str(float(self.numbers_dict["FP"]) / (self.total / 2) * 100)
+        }
 
-    def compile_clang(self, output_dict, total):
-        print "% True Positives (compile): " + str(float(output_dict["compile"]["TP"])/(total/2) * 100)
-        print "% False Poistives (compile): " + str(float(output_dict["compile"]["FP"])/(total/2) * 100)
-    def init(self):
-        pass
+    def get_errors(self):
+        return self.errors_dict
 
-    def tabulate(self, error_code_dict):
-        table = []
-        for key in error_code_dict.keys():
-            table.append([key, error_code_dict[key]["TP"], error_code_dict[key]["FP"]])
-        print tabulate(table, headers=["Error-Code", "TP", "FP"], tablefmt="fancy_grid")
-
+    def get_tool_name(self):
+        return self.name
 
     def __init__(self, benchmark_path):
         self.benchmark_path = os.path.expanduser(benchmark_path)
-
-    def analyze(self):
-        output_dict, error_dict, total = self.run()
-        print "Total Tests Run: " + str(total)
-        self.runtime_clang(output_dict, total)
-        self.compile_clang(output_dict, total)
-        self.tabulate(error_dict)
+        self.errors_dict = None
+        self.numbers_dict = None
+        self.name = "UB San"
+        self.total = None
 
 
     def cleanup(self):
