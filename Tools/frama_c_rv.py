@@ -99,6 +99,7 @@ class FramaCRV(Tool):
         self.total = None
 
     def analyze(self):
+        pass
 
     def cleanup(self):
         Tool.cleanup(self)

@@ -21,12 +21,12 @@ if __name__ == '__main__':
         # ubsan = UBSanRV(sys.argv[1])
         # ubsan.analyze()
         path = sys.argv[1]
-        tools = [ValgrindRV(path)]
+        tools = [FramaCRV(path)]
         # run the tools
-        tools = map(lambda x: x.run(), tools)
+        map(lambda x: x.run(), tools)
         numbers = []
-        map(lambda x: numbers.append([x.get_tool_name, x.get_numbers["TP"], x.get_numbers["FP"]]), tools)
-        error_codes = reduce(lambda x, y: merge(x, y), map(lambda z: z.get_errors()), tools, {"TP": set("a"), "FP": set("b")})
+        map(lambda x: numbers.append([x.get_tool_name(), x.get_numbers()["TP"], x.get_numbers()["FP"]]), tools)
+        error_codes = reduce(lambda x, y: merge(x, y), map(lambda z: z.get_errors(), tools), {"TP": set("a"), "FP": set("b")})
         print numbers
         print error_codes
 
