@@ -78,8 +78,10 @@ class FramaCRV(Tool):
 
 
     def framac_data(self, output_dict, total):
-        print "% True Positives (FramaC): " + str(float(output_dict["TP"])/(total/2) * 100)
-        print "% False Poistives (FramaC): " + str(float(output_dict["FP"])/(total/2) * 100)
+        return {
+            "TP": str(float(output_dict["TP"])/(total/2) * 100),
+            "FP": str(float(output_dict["FP"])/(total/2) * 100)
+        }
 
     def init(self):
         pass
@@ -96,10 +98,7 @@ class FramaCRV(Tool):
 
     def analyze(self):
         output_dict, error_dict, total = self.run()
-        print "Total Tests Run: " + str(total)
-        self.framac_data(output_dict, total)
-        self.tabulate(error_dict)
-
+        return output_dict, self.framac_data(output_dict, total)
 
     def cleanup(self):
         Tool.cleanup(self)
