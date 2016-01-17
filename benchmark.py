@@ -45,7 +45,7 @@ if __name__ == '__main__':
         print "Needed: Path to Benchmark as arguments"
     else:
         path = sys.argv[1]
-        tools = [UBSanRV(path), FramaCRV(path), CompcertRV(path), ValgrindRV(path)]
+        tools = [CompcertRV(path), ValgrindRV(path)]
         map(lambda x: x.run(), tools)
         numbers = []
         map(lambda x: numbers.append([x.get_tool_name(), x.get_numbers()["TP"], x.get_numbers()["FP"]]), tools)

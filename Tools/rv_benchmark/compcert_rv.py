@@ -29,7 +29,7 @@ class CompcertRV(Tool):
                 total += 1
                 error_code = self.get_error_code(c_file)
                 if error_code not in error_code_dict:
-                    error_code_dict[error_code] = {"TP": " ", "FP": " "}
+                    error_code_dict[error_code] = {"TP": set([]), "FP": set([])}
                 signal.signal(signal.SIGALRM, self.signal_handler)
                 signal.alarm(5)
                 try:
@@ -40,10 +40,10 @@ class CompcertRV(Tool):
                         print output
                         if "bad" in c_file:
                             output_dict["TP"] += 1
-                            error_code_dict[error_code]["TP"] = set(self.name)
+                            error_code_dict[error_code]["TP"].add(self.name)
                         else:
                             output_dict["FP"] += 1
-                            error_code_dict[error_code]["FP"] = set(self.name)
+                            error_code_dict[error_code]["FP"].add(self.name)
                 except subprocess.CalledProcessError as error:
                     # Problem with the plugin
                     pass
