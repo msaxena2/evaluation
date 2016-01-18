@@ -34,19 +34,15 @@ class CompcertRV(Tool):
                 signal.alarm(5)
                 try:
                     command = ["ccomp", "-fstruct-passing", "-interp", "-trace", c_file]
-                    # print command
-                    output = subprocess.check_output(command, stderr=subprocess.STDOUT)
-                    if "warning" in output and c_file in output:
-                        print output
-                        if "bad" in c_file:
-                            output_dict["TP"] += 1
-                            error_code_dict[error_code]["TP"].add(self.name)
-                        else:
-                            output_dict["FP"] += 1
-                            error_code_dict[error_code]["FP"].add(self.name)
-                except subprocess.CalledProcessError as error:
+                    subprocess.check_output(command, stderr=subprocess.STDOUT)
+                except subprocess.CalledProcessError:
                     # Problem with the plugin
-                    pass
+                    if "bad" in c_file:
+                        output_dict["TP"] += 1
+                        error_code_dict[error_code]["TP"].add(self.name)
+                    else:
+                        output_dict["FP"] += 1
+                        error_code_dict[error_code]["FP"].add(self.name)
                 except TimeoutException:
                     pass
                 finally:

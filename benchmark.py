@@ -10,13 +10,14 @@ import sys
 
 def tabulate_number_data(number_table):
     tabulate(number_table, headers=["Tool", "% True Positives", "% False Positives"],
-                                    tablefmt="fancy_grid")
+             tablefmt="fancy_grid")
 
 
 def tabulate_error_codes(error_code_dict):
     error_code_arr = ["Error-Code", "True Positive Reported By", "False Positive Reported By"]
     for code in error_code_dict.keys():
         row = [code, ", ".join(row[code]["TP"]), ", ".join(row[code]["FP"])]
+
 
 def merge(dict1, dict2):
     retdict = {}
@@ -25,17 +26,16 @@ def merge(dict1, dict2):
             retdict[key] = {"TP": set([]), "FP": set([])}
 
         retdict[key]["TP"] = retdict[key]["TP"] | dict1[key]["TP"]
-        retdict[key]["TP"] = retdict[key]["FP"] | dict1[key]["FP"]
+        retdict[key]["FP"] = retdict[key]["FP"] | dict1[key]["FP"]
+
         if key in dict2:
             retdict[key]["TP"] = retdict[key]["TP"] | dict2[key]["TP"]
-            retdict[key]["TP"] = retdict[key]["FP"] | dict2[key]["FP"]
+            retdict[key]["FP"] = retdict[key]["FP"] | dict2[key]["FP"]
 
     for key in dict2:
         if key not in retdict:
-            retdict[key] = set([])
-        if key not in dict1:
-            retdict[key]["TP"] = retdict[key]["TP"] | dict2[key]["TP"]
-            retdict[key]["TP"] = retdict[key]["FP"] | dict2[key]["FP"]
+            retdict[key] = {"TP": dict2[key]["TP"],
+                            "FP": dict2[key]["FP"]}
 
     return retdict
 
@@ -52,4 +52,3 @@ if __name__ == '__main__':
         error_codes = reduce(lambda x, y: merge(x, y), map(lambda z: z.get_errors(), tools))
         tabulate_number_data(numbers)
         print error_codes
-
