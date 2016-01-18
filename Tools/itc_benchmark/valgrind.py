@@ -2,24 +2,27 @@ import os
 import subprocess
 
 from Tools.rv_benchmark.tool import Tool
-from utils import Info
-
+from utils.utils import Info
+import progressbar
 
 class Valgrind(Tool):
 
     def run(self, verbose=False, log_location=None):
         output_dict = {}
+        print "here"
         spec_dict = self.info.get_spec_dict()
-        for i in xrange(1, 3):#len(spec_dict.keys()) + 1):
+        os.chdir(self.benchmark_path)
+        for i in range(1, len(spec_dict.keys()) + 1):
             output_dict[i] = {"count": spec_dict[i]["count"], "TP": 0, "FN": 0}
+            print self.name + " being tested on file " + str(i)
             for j in range(i, spec_dict[i]["count"]):
                 arg = [str('%03d' % i) + str('%03d' % j)]
                 try:
-                    output_w = subprocess.check_output(["valgrind", "--error-exitcode=-1","./01.w_Defects/01_w_Defects", arg], stderr=subprocess.STDOUT)
+                    output_w = subprocess.check_output(["valgrind", "--error-exitcode=-1","./01.w_Defects/01_w_Defects"] + arg)
                 except subprocess.CalledProcessError:
                     output_dict[i]["TP"] += 1
                 try:
-                    output_wo = subprocess.check_output(["valgrind", "--error-exitcode=-1","./02.wo_Defects/02_wo_Defects", arg], stderr=subprocess.STDOUT)
+                    output_wo = subprocess.check_output(["valgrind", "--error-exitcode=-1","./02.wo_Defects/02_wo_Defects"] + arg)
                     # Update Data record
                 except subprocess.CalledProcessError:
                     output_dict[i]["FN"] += 1
@@ -46,6 +49,7 @@ class Valgrind(Tool):
     def __init__(self, benchmark_path, info_csv):
         self.info = Info(info_csv)
         self.benchmark_path = benchmark_path
+        self.name = "Valgrind + GCC"
 
     def analyze(self):
         Tool.analyze(self)
