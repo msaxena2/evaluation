@@ -58,7 +58,7 @@ class UBSanRV(Tool):
                 signal.signal(signal.SIGALRM, self.signal_handler)
                 signal.alarm(5)
                 try:
-                    command = ["clang", "-Wpedantic", "-Wall", "-Wextra", "-g", "-fsanitize=undefined",
+                    command = ["clang", "-Wpedantic", "-Wall", "-Wextra", "-g", "-fsanitize=undefined", "-fsanitize=thread", "-01"
                                "-std=c11"] + c_files + ["-o", out_name]
                     # print command
                     subprocess.check_output(command, stderr=subprocess.STDOUT)
@@ -98,7 +98,7 @@ class UBSanRV(Tool):
         self.benchmark_path = os.path.expanduser(benchmark_path)
         self.errors_dict = None
         self.numbers_dict = None
-        self.name = "UB San"
+        self.name = "Thread + UB Sanitizer (Clang)"
         self.total = None
 
     def cleanup(self):

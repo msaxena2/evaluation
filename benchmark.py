@@ -48,7 +48,7 @@ if __name__ == '__main__':
     else:
         path = sys.argv[1]
 
-        tools = [CompcertRV(path), ValgrindRV(path)]
+        tools = [CompcertRV(path), ValgrindRV(path), FramaCRV(path), UBSanRV(path)]
         map(lambda x: x.run(), tools)
         numbers = []
         map(lambda x: numbers.append([x.get_tool_name(), x.get_numbers()["TP"], x.get_numbers()["FP"]]), tools)

@@ -27,5 +27,5 @@ class Tool:
 
 
     def print_folder(self, name, folder):
-        print name + " testing folder " + folder
+        print name + " being tested on folder " + folder
 
