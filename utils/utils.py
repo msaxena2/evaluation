@@ -14,3 +14,33 @@ class Info:
 
     def get_spec_dict(self):
         return self.info_dict
+
+    def bootstrap_file(self, file_path, temp_store_file_path, vflag):
+        with open(temp_store_file_path, 'w+') as temp_file:
+            count = 0
+            main_begin = False
+            with open(file_path, 'r') as cur_file:
+                for line in cur_file:
+                    if "extern volatile int vflag" in line:
+                        temp_file.write("int vflag = " + vflag)
+                        continue
+                    if "_main()" in line:
+                        temp_file.write("int idx, sink;")
+                        temp_file.write("double dsink;")
+                        temp_file.write("void * psipk;")
+                        temp_file.write("int main()")
+                        main_begin = True
+                        continue
+                    if main_begin:
+                        if line == "{":
+                            count += 1
+                        if line == "}":
+                            if count > 1:
+                                count -= 1;
+                            else:
+                                main_begin = False
+                                temp_file.write("return 0")
+                    temp_file.write(line)
+
+
+
