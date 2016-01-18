@@ -96,7 +96,7 @@ class FramaCRV(Tool):
         self.numbers_dict = {}
         self.errors_dict = {}
         self.total = None
-        self.name = "Frama-C"
+        self.name = "Frama-C, Value Analysis"
 
     def analyze(self):
         pass

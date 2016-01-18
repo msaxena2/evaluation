@@ -4,13 +4,14 @@ from Tools.rv_benchmark.frama_c_rv import FramaCRV
 from Tools.rv_benchmark.ub_san_rv import UBSanRV
 from Tools.rv_benchmark.compcert_rv import CompcertRV
 from Tools.rv_benchmark.valgrind_rv import ValgrindRV
+from Tools.
 from tabulate import tabulate
 import sys
 
 
 def tabulate_number_data(number_table):
     print tabulate(number_table, headers=["Tool", "% True Positives", "% False Positives"],
-             tablefmt="fancy_grid")
+             tablefmt="latex")
 
 
 
@@ -19,7 +20,7 @@ def tabulate_error_codes(error_code_dict):
     for code in error_code_dict:
         row = [code, ", ".join(error_code_dict[code]["TP"]), ", ".join(error_code_dict[code]["FP"])]
         error_code_arr.append(row)
-    print tabulate(error_code_arr, headers=["Error-Code", "True Positive Reported By", "False Positive Reported By"], tablefmt="fancy_grid")
+    print tabulate(error_code_arr, headers=["Error-Code", "True Positive Reported By", "False Positive Reported By"], tablefmt="latex")
 
 def merge(dict1, dict2):
     retdict = {}
@@ -43,15 +44,17 @@ def merge(dict1, dict2):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 3 :
         print "Needed: Path to Benchmark as arguments"
     else:
         path = sys.argv[1]
-
-        tools = [CompcertRV(path), ValgrindRV(path), FramaCRV(path), UBSanRV(path)]
-        map(lambda x: x.run(), tools)
-        numbers = []
-        map(lambda x: numbers.append([x.get_tool_name(), x.get_numbers()["TP"], x.get_numbers()["FP"]]), tools)
-        error_codes = reduce(lambda x, y: merge(x, y), map(lambda z: z.get_errors(), tools))
-        tabulate_number_data(numbers)
-        tabulate_error_codes(error_codes)
+        if sys.argv[2] == "rv":
+            tools = [CompcertRV(path), ValgrindRV(path), FramaCRV(path), UBSanRV(path)]
+            map(lambda x: x.run(), tools)
+            numbers = []
+            map(lambda x: numbers.append([x.get_tool_name(), x.get_numbers()["TP"], x.get_numbers()["FP"]]), tools)
+            error_codes = reduce(lambda x, y: merge(x, y), map(lambda z: z.get_errors(), tools))
+            tabulate_number_data(numbers)
+            tabulate_error_codes(error_codes)
+        if sys.argv[2] == "itc":
+            tools = []

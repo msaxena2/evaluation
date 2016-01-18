@@ -13,13 +13,13 @@ class Valgrind(Tool):
         for i in xrange(1, 3):#len(spec_dict.keys()) + 1):
             output_dict[i] = {"count": spec_dict[i]["count"], "TP": 0, "FN": 0}
             for j in range(i, spec_dict[i]["count"]):
-                arg = str('%03d' % i) + str('%03d' % j)
+                arg = [str('%03d' % i) + str('%03d' % j)]
                 try:
-                    output_w = subprocess.check_output(["valgrind", "--error-exitcode=-1","./01.w_Defects/01_w_Defects", arg], stderr=subprocess.STDOUT, shell=True)
+                    output_w = subprocess.check_output(["valgrind", "--error-exitcode=-1","./01.w_Defects/01_w_Defects", arg], stderr=subprocess.STDOUT)
                 except subprocess.CalledProcessError:
                     output_dict[i]["TP"] += 1
                 try:
-                    output_wo = subprocess.check_output(["valgrind", "--error-exitcode=-1","./02.wo_Defects/02_wo_Defects", arg], stderr=subprocess.STDOUT, shell=True)
+                    output_wo = subprocess.check_output(["valgrind", "--error-exitcode=-1","./02.wo_Defects/02_wo_Defects", arg], stderr=subprocess.STDOUT)
                     # Update Data record
                 except subprocess.CalledProcessError:
                     output_dict[i]["FN"] += 1
