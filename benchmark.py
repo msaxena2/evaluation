@@ -9,15 +9,17 @@ import sys
 
 
 def tabulate_number_data(number_table):
-    tabulate(number_table, headers=["Tool", "% True Positives", "% False Positives"],
+    print tabulate(number_table, headers=["Tool", "% True Positives", "% False Positives"],
              tablefmt="fancy_grid")
 
 
-def tabulate_error_codes(error_code_dict):
-    error_code_arr = ["Error-Code", "True Positive Reported By", "False Positive Reported By"]
-    for code in error_code_dict.keys():
-        row = [code, ", ".join(row[code]["TP"]), ", ".join(row[code]["FP"])]
 
+def tabulate_error_codes(error_code_dict):
+    error_code_arr = []
+    for code in error_code_dict:
+        row = [code, ", ".join(error_code_dict[code]["TP"]), ", ".join(error_code_dict[code]["FP"])]
+        error_code_arr.append(row)
+    print tabulate(error_code_arr, headers=["Error-Code", "True Positive Reported By", "False Positive Reported By"], tablefmt="fancy_grid")
 
 def merge(dict1, dict2):
     retdict = {}
@@ -45,10 +47,11 @@ if __name__ == '__main__':
         print "Needed: Path to Benchmark as arguments"
     else:
         path = sys.argv[1]
+
         tools = [CompcertRV(path), ValgrindRV(path)]
         map(lambda x: x.run(), tools)
         numbers = []
         map(lambda x: numbers.append([x.get_tool_name(), x.get_numbers()["TP"], x.get_numbers()["FP"]]), tools)
         error_codes = reduce(lambda x, y: merge(x, y), map(lambda z: z.get_errors(), tools))
         tabulate_number_data(numbers)
-        print error_codes
+        tabulate_error_codes(error_codes)

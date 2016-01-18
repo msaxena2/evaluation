@@ -1,11 +1,8 @@
 __author__ = 'manasvi'
-
-
 class Tool:
 
     def __init__(self):
         pass
-
     def run(self):
         pass
 
@@ -27,3 +24,8 @@ class Tool:
         else:
             error_code = c_file.split("-bad")[0]
         return error_code
+
+
+    def print_folder(self, name, folder):
+        print name + " testing folder " + folder
+

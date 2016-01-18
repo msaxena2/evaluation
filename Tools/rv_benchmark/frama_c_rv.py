@@ -5,7 +5,7 @@ import signal
 import subprocess32 as subprocess
 
 from Tools.rv_benchmark.tool import Tool
-
+import progressbar
 
 class TimeoutException(Exception):
     pass
@@ -22,9 +22,10 @@ class FramaCRV(Tool):
         os.chdir(self.benchmark_path)
         for dir in filter(lambda x: os.path.isdir(x), os.listdir(os.getcwd())):
             os.chdir(dir)
-            print "In Directory: " + os.getcwd()
+            Tool.print_folder(self, self.name, dir)
             file_list = os.listdir(os.getcwd())
-            for c_file in filter(lambda y: y.endswith(".c"), file_list):
+            bar = progressbar.ProgressBar()
+            for c_file in bar(filter(lambda y: y.endswith(".c"), file_list)):
                 c_files = []
                 exec_name = c_file.split('.')[0]
                 if "link" in c_file:
@@ -59,7 +60,6 @@ class FramaCRV(Tool):
                     # print command
                     output = subprocess.check_output(command, stderr=subprocess.STDOUT)
                     if "warning" in output and c_file in output:
-                        print output
                         if is_bad:
                             output_dict["TP"] += 1
                             error_code_dict[error_code]["TP"].add(self.name)

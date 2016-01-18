@@ -1,11 +1,10 @@
 __author__ = 'manasvi'
 import os
 import signal
-
 import subprocess32 as subprocess
 
 from Tools.rv_benchmark.tool import Tool
-
+import progressbar
 
 class TimeoutException(Exception):
     pass
@@ -20,10 +19,13 @@ class CompcertRV(Tool):
         error_code_dict = {}
         total = 0
         os.chdir(self.benchmark_path)
-        for dir in filter(lambda x: os.path.isdir(x), os.listdir(os.getcwd())):
-            os.chdir(dir)
+        for test_dir in filter(lambda x: os.path.isdir(x), os.listdir(os.getcwd())):
+            os.chdir(test_dir)
             file_list = os.listdir(os.getcwd())
-            for c_file in filter(lambda y: y.endswith(".c"), file_list):
+            folder = filter(lambda y: y.endswith(".c"), file_list)
+            bar = progressbar.ProgressBar()
+            Tool.print_folder(self, self.name, test_dir)
+            for c_file in bar(folder):
                 if "link" in c_file:
                     continue
                 total += 1
@@ -66,6 +68,7 @@ class CompcertRV(Tool):
         return self.errors_dict
 
     def __init__(self, benchmark_path):
+        Tool.__init__(self)
         self.benchmark_path = os.path.expanduser(benchmark_path)
         self.numbers_dict = {}
         self.errors_dict = {}

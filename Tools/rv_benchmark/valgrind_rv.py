@@ -3,6 +3,7 @@ import os
 import signal
 
 import subprocess32 as subprocess
+import progressbar
 
 from Tools.rv_benchmark.tool import Tool
 
@@ -23,7 +24,9 @@ class ValgrindRV(Tool):
         for dir in filter(lambda x : os.path.isdir(x), os.listdir(os.getcwd())):
             os.chdir(dir)
             file_list = os.listdir(os.getcwd())
-            for c_file in filter(lambda y : y.endswith(".c"), file_list):
+            bar = progressbar.ProgressBar()
+            Tool.print_folder(self, self.name, dir)
+            for c_file in bar(filter(lambda y : y.endswith(".c"), file_list)):
                 c_files = []
                 exec_name = c_file.split('.')[0]
                 if "link" in c_file:
@@ -92,6 +95,7 @@ class ValgrindRV(Tool):
         return self.name
 
     def __init__(self, benchmark_path):
+        Tool.__init__(self)
         self.benchmark_path = os.path.expanduser(benchmark_path)
         self.errors_dict = None
         self.numbers_dict = None
