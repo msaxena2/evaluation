@@ -57,6 +57,9 @@ def bootstrap_file(file_path, temp_store_file_path, vflag):
                             temp_file.write("return 0;\n")
                 temp_file.write(line)
 
+def sanitize_cil_file(file_path):
+    
+
 
 def checkdir(dir):
     return dir in relevant_itc_dirs
