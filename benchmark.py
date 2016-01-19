@@ -5,6 +5,7 @@ from Tools.rv_benchmark.ub_san_rv import UBSanRV
 from Tools.rv_benchmark.compcert_rv import CompcertRV
 from Tools.rv_benchmark.valgrind_rv import ValgrindRV
 from Tools.itc_benchmark.valgrind import Valgrind
+from Tools.itc_benchmark.comcert import Compcert
 from tabulate import tabulate
 import sys
 
@@ -58,5 +59,5 @@ if __name__ == '__main__':
             tabulate_error_codes(error_codes)
         if sys.argv[2] == "itc":
             print path
-            tools = [CompcertRV(path)]
+            tools = [Compcert(path)]
             map(lambda x: x.run(), tools)

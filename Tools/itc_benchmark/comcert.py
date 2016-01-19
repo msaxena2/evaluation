@@ -19,11 +19,12 @@ class Compcert(Tool):
         relevant_dirs = ["01.w_Defects", "02.wo_Defects"]
         for cur_dir in relevant_dirs:
             os.chdir(os.path.join(self.benchmark_path, cur_dir))
-            os.mkdir("compcert_temp")
+            temp_path = os.path.join(os.getcwd(), "compcert_temp")
+            if not os.path.exists(temp_path):
+                os.mkdir(temp_path)
             output_dict = {}
             spec_dict = self.info.get_spec_dict()
             mapping_dict = self.info.get_file_mapping()
-            os.chdir(self.benchmark_path)
             for i in range(1, len(spec_dict.keys()) + 1):
                 output_dict[i] = {"count": spec_dict[i]["count"], "TP": 0, "FP": 0}
                 file_prefix = mapping_dict[i]
@@ -37,13 +38,17 @@ class Compcert(Tool):
                                                os.path.join(os.getcwd(), "compcert_temp",
                                                             bootstrap_file), vflag)
                     try:
-                        cilly_command = ["cilly", "--merge", "--keepmerged", "--save-temps",
+                        cilly_command = ["cilly", "--merge", "--keepmerged", "--save-temps", "-lm", "-lpthread"
                                          "-I" + os.path.join(self.benchmark_path, "include"),
                                          os.path.join(os.getcwd(), "compcert_temp", bootstrap_file)]
 
                         subprocess.check_output(cilly_command)
                     except subprocess.CalledProcessError:
+                        #merging of source files failed, countinue
                         continue
+                    try:
+                        compcert_command = ["comcert", "--interp", ""]
+
                     except TimeoutException:
                         continue
                     finally:
