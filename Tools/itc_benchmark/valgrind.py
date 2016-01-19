@@ -61,7 +61,7 @@ class Valgrind(Tool):
         subprocess.check_call(["./configure"])
         subprocess.check_call(["make"])
 
-    def __init__(self, benchmark_path, info_csv):
+    def __init__(self):
         self.info = Info(info_csv)
         self.benchmark_path = benchmark_path
         self.name = "Valgrind + GCC"

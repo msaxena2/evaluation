@@ -1,66 +1,62 @@
 import os
 import subprocess
-
+import utils.utils
 from Tools.rv_benchmark.tool import Tool
 from utils.utils import Info
 import progressbar
 import signal
 
+
 class TimeoutException(Exception):
     pass
 
-class Valgrind(Tool):
 
+class Compcert(Tool):
     def signal_handler(self, signum, frame):
         raise TimeoutException("Timed out!")
 
     def run(self, verbose=False, log_location=None):
-        output_dict = {}
-        spec_dict = self.info.get_spec_dict()
-        os.chdir(self.benchmark_path)
-        for i in range(1, len(spec_dict.keys()) + 1):
-            output_dict[i] = {"count": spec_dict[i]["count"], "TP": 0, "FP": 0}
-            print self.name + " being tested on file " + str(i)
-            bar = progressbar.ProgressBar()
-            for j in bar(range(1, spec_dict[i]["count"])):
-                arg = [str('%03d' % i) + str('%03d' % j)]
-                try:
-                    signal.signal(signal.SIGALRM, self.signal_handler)
-                    signal.alarm(40)
-                    mode = "TP"
-                    output_w = subprocess.check_output(["valgrind", "--error-exitcode=-1", "./01.w_Defects/01_w_Defects"] + arg, stderr=subprocess.STDOUT)
-                    mode = "FP"
-                    output_wo = subprocess.check_output(["valgrind", "--error-exitcode=-1", "./02.wo_Defects/02_wo_Defects"] + arg, stderr=subprocess.STDOUT)
-                except subprocess.CalledProcessError:
-                    if mode == "TP":
-                        output_dict[i]["TP"] += 1
-                    else:
-                        output_dict[i]["FP"] += 1
-                except TimeoutException:
-                    continue
-                finally:
-                    #reset the alarm
-                    signal.alarm(0)
-                if verbose:
-                    whole_path = os.path.expanduser(log_location)
-                    mode = 'a'
-                    if not os.path.exists(whole_path) or (i == 1 and j == 0):
-                        mode = 'w+'
-                    with open(whole_path, mode) as output_file:
-                        output_file.write(output_w)
-                        output_file.write(output_wo)
-        print output_dict
+        relevant_dirs = ["01.w_Defects", "02.wo_Defects"]
+        for cur_dir in relevant_dirs:
+            os.chdir(os.path.join(self.benchmark_path, cur_dir))
+            os.mkdir("compcert_temp")
+            output_dict = {}
+            spec_dict = self.info.get_spec_dict()
+            mapping_dict = self.info.get_file_mapping()
+            os.chdir(self.benchmark_path)
+            for i in range(1, len(spec_dict.keys()) + 1):
+                output_dict[i] = {"count": spec_dict[i]["count"], "TP": 0, "FP": 0}
+                file_prefix = mapping_dict[i]
+                relevant_file = file_prefix + ".c"
+                print self.name + " being tested on file " + relevant_file
+                bar = progressbar.ProgressBar()
+                for j in bar(range(1, spec_dict[i]["count"])):
+                    vflag = str('%03d' % j)
+                    bootstrap_file = file_prefix + "_temp.c"
+                    utils.utils.bootstrap_file(os.path.abspath(relevant_file),
+                                               os.path.join(os.getcwd(), "compcert_temp",
+                                                            bootstrap_file), vflag)
+                    try:
+                        cilly_command = ["cilly", "--merge", "--keepmerged", "--save-temps",
+                                         "-I" + os.path.join(self.benchmark_path, "include"),
+                                         os.path.join(os.getcwd(), "compcert_temp", bootstrap_file)]
 
-
+                        subprocess.check_output(cilly_command)
+                    except subprocess.CalledProcessError:
+                        continue
+                    except TimeoutException:
+                        continue
+                    finally:
+                        pass
+            print output_dict
 
     def init(self):
         os.chdir(os.path.expanduser(self.benchmark_path))
 
-
-    def __init__(self, benchmark_path, info_csv):
-        self.info = Info(info_csv)
+    def __init__(self, benchmark_path):
+        self.info = Info()
         self.benchmark_path = benchmark_path
-        self.name = "Valgrind + GCC"
+        self.name = "Compcert"
 
     def analyze(self):
         Tool.analyze(self)

@@ -58,5 +58,5 @@ if __name__ == '__main__':
             tabulate_error_codes(error_codes)
         if sys.argv[2] == "itc":
             print path
-            tools = [Valgrind(path, "/home/manasvi/mac/autobench/utils/utils.csv")]
+            tools = [CompcertRV(path)]
             map(lambda x: x.run(), tools)
