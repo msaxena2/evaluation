@@ -33,12 +33,12 @@ class Compcert(Tool):
 
 
     def get_compcert_command(self, cur_dir, file_prefix):
-        cil_file = os.path.join(self.benchmark_path, cur_dir, "concert_temp", file_prefix + "-temp.cil.c")
+        cil_file = os.path.join(self.benchmark_path, cur_dir, "compcert_temp", file_prefix + "-temp.cil.c")
         if not os.path.exists(cil_file):
             return []
 
-
-
+        utils.utils.sanitize_cil_file(cil_file)
+        return ["ccomp", "-interp", cil_file]
 
     def run(self, verbose=False, log_location=None):
         relevant_dirs = ["01.w_Defects", "02.wo_Defects"]
@@ -46,25 +46,26 @@ class Compcert(Tool):
             output_dict = {}
             spec_dict = self.info.get_spec_dict()
             mapping_dict = self.info.get_file_mapping()
-            for i in range(1, 2):  # len(spec_dict.keys()) + 1):
+            for i in range(1, len(spec_dict.keys()) + 1):
                 output_dict[i] = {"count": spec_dict[i]["count"], "TP": 0, "FP": 0}
                 file_prefix = mapping_dict[i]
-                for j in range(1, spec_dict[i]["count"]):
+                print self.name + " being tested on folder " + cur_dir + " and file " + file_prefix + ".c"
+                bar = progressbar.ProgressBar()
+                for j in bar(range(1, spec_dict[i]["count"])):
                     vflag = str('%03d' % j)
                     cilly_command = self.get_cilly_commmand(cur_dir, file_prefix, vflag)
                     if len(cilly_command) == 0:
                         break
                     try:
-                        subprocess.check_output(cilly_command)
+                        subprocess.check_output(cilly_command, stderr=subprocess.STDOUT)
                     except subprocess.CalledProcessError:
-                        # merging of source files failed, countinue
                         continue
                     try:
-                        signal.signal(signal.SIGALRM, self.signal_handler)
-                        signal.alarm(10)
-                        compcert_command = ["ccomp", "-interp", os.path.join(temp_path, file_prefix + "-temp.cil.c")]
-                        print ' '.join(compcert_command)
-                        subprocess.check_output(compcert_command)
+                        compcert_command = self.get_compcert_command(cur_dir, file_prefix)
+                        if len(compcert_command) != 0:
+                            signal.signal(signal.SIGALRM, self.signal_handler)
+                            signal.alarm(10)
+                            subprocess.check_output(compcert_command, stderr=subprocess.STDOUT)
                     except subprocess.CalledProcessError:
                         if "w_Defects" in cur_dir:
                             output_dict[i]["TP"] += 1
