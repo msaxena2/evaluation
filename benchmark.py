@@ -43,6 +43,22 @@ def merge(dict1, dict2):
 
     return retdict
 
+def tabulate_itc_criteria(output_dict, info_dict):
+    proc_dict = {}
+    for key in output_dict:
+        category = info_dict[key]
+        if category not in proc_dict:
+            proc_dict[category] = {"total": 0, "TP": 0, "FP": 0}
+        proc_dict[category]["total"] += output_dict[key]["count"]
+        proc_dict[category]["TP"] += output_dict[key]["TP"]
+        proc_dict[category["FP"]] += output_dict[key]["FP"]
+
+    table = []
+
+    map(lambda x : [x, ])
+
+
+
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
