@@ -76,19 +76,23 @@ def crunch_data(output_dict):
 
 
 def tabulate_itc_criteria(tool_list, crunched_data):
-    #table = [["\\"] + tool_list]
+    header = [" "]
+    for tool in tool_list:
+        header.append(tool + " (DR)")
+        header.append(tool + " (FDR)")
+        header.append(tool + " (P)")
+
     row = []
-    print tool_list
     table = []
     for error in crunched_data[0].keys():
-        #row.append(error)
+        row.append(error)
         for i in range(0, len(tool_list)):
             dr = float(crunched_data[i][error]["TP"]) / crunched_data[i][error]["count"] * 100
             fr = 100 - (float(crunched_data[i][error]["FP"]) / crunched_data[i][error]["count"] * 100)
             prod = math.sqrt(dr * fr)
-        row = row + [dr, fr, prod]
+            row = row + [dr, fr, prod]
     table.append(row)
-    print tabulate(table, tablefmt="fancy_grid")
+    print tabulate(table, headers=header, tablefmt="fancy_grid")
 
 
 def run_itc_benchmark():

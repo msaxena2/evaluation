@@ -38,14 +38,18 @@ def bootstrap_file(file_path, temp_store_file_path, vflag):
 
 def sanitize_cil_file(file_path):
     fh, abs_path = mkstemp()
+    sanitize = ["stdlib.h", "stdio.h", "math.h", "string.h", "pthread.h", "ctype.h", "unistd.h", "limits.h"]
     with open(abs_path,'w') as new_file:
         with open(file_path) as old_file:
             for line in old_file:
-                if "stdlib.h" in line or "stdio.h" in line:
-                    continue
+                write = True
+                for word in sanitize:
+                    if word in line:
+                        write = False
                 if "extern  __attribute__((__nothrow__)) int ( __attribute__((__leaf__)) rand)(void)" in line:
-                    continue
-                new_file.write(line)
+                    write = False
+                if write:
+                    new_file.write(line)
 
     close(fh)
     remove(file_path)
