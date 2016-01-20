@@ -87,13 +87,6 @@ def tabulate_itc_criteria(tool_list, crunched_data):
     tabulate(row)
 
 
-def tabulate_data(crunched_dict, names_list):
-    names_list = names_list.append("/", 0)
-    row_set = crunched_dict.keys()
-    table = [names_list]
-    for err_type in row_set:
-
-
 def run_itc_benchmark():
     global tools
     tools = [Compcert(path)]
