@@ -8,12 +8,13 @@ from Tools.itc_benchmark.valgrind import Valgrind
 from Tools.itc_benchmark.comcert import Compcert
 from tabulate import tabulate
 import sys
+from  utils.utils import Info
 
+error_info = Info().get_spec_dict()
 
 def tabulate_number_data(number_table):
     print tabulate(number_table, headers=["Tool", "% True Positives", "% False Positives"],
-             tablefmt="latex")
-
+                   tablefmt="latex")
 
 
 def tabulate_error_codes(error_code_dict):
@@ -21,7 +22,9 @@ def tabulate_error_codes(error_code_dict):
     for code in error_code_dict:
         row = [code, ", ".join(error_code_dict[code]["TP"]), ", ".join(error_code_dict[code]["FP"])]
         error_code_arr.append(row)
-    print tabulate(error_code_arr, headers=["Error-Code", "True Positive Reported By", "False Positive Reported By"], tablefmt="latex")
+    print tabulate(error_code_arr, headers=["Error-Code", "True Positive Reported By", "False Positive Reported By"],
+                   tablefmt="latex")
+
 
 def merge(dict1, dict2):
     retdict = {}
@@ -43,6 +46,7 @@ def merge(dict1, dict2):
 
     return retdict
 
+
 def tabulate_itc_criteria(output_dict, info_dict):
     proc_dict = {}
     for key in output_dict:
@@ -55,7 +59,7 @@ def tabulate_itc_criteria(output_dict, info_dict):
 
     table = []
 
-    map(lambda x : [x, ])
+    map(lambda x: [x, ])
 
 
 def run_rv_benchmark():
@@ -69,10 +73,35 @@ def run_rv_benchmark():
     tabulate_error_codes(error_codes)
 
 
+def crunch_data(output_dict):
+    return_dict = {}
+    for key in output_dict:
+        return_key = error_info[key][2]
+        if return_key not in return_dict:
+            return_dict[return_key] = {"count": output_dict[key]["count"], "TP": output_dict[key]["TP"],
+                                       "FP": output_dict[key]["FP"]}
+        else:
+            return_dict[return_key]["count"] += output_dict["key"]["count"]
+            return_dict[return_key]["TP"] += output_dict["key"]["TP"]
+            return_dict[return_key]["FP"] += output_dict["key"]["FP"]
+
+    return return_key
+
+
+def tabulate_data(crunched_dict, names_list):
+    names_list = names_list.append("/", 0)
+    row_set = crunched_dict.keys()
+    table = [names_list]
+    for err_type in row_set:
+
+
+
 def run_itc_benchmark():
     global tools
     tools = [Compcert(path)]
-    map(lambda x: x.run(), tools)
+    output_dicts = map(lambda x: x.run(), tools)
+    names_list = map(lambda x: x.get_name(), tools)
+    data_list = map(lambda x: crunch_data(x), output_dicts)
 
 
 if __name__ == '__main__':

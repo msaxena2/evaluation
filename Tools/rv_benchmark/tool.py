@@ -1,8 +1,8 @@
 __author__ = 'manasvi'
 class Tool:
 
-    def __init__(self):
-        pass
+    def __init__(self, name):
+        self.name = name
     def run(self):
         pass
 

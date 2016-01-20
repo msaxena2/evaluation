@@ -75,10 +75,11 @@ class Compcert(Tool):
                         continue
                     finally:
                         signal.alarm(0)
-            print output_dict
+            return output_dict
 
-    def init(self):
-        os.chdir(os.path.expanduser(self.benchmark_path))
+
+    def get_name(self):
+        return self.name
 
     def __init__(self, benchmark_path):
         self.info = Info()

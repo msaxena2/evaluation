@@ -49,8 +49,10 @@ class Valgrind(Tool):
                     with open(whole_path, mode) as output_file:
                         output_file.write(output_w)
                         output_file.write(output_wo)
-        print output_dict
+        return output_dict
 
+    def get_name(self):
+        return self.name
 
 
     def init(self):
@@ -61,8 +63,8 @@ class Valgrind(Tool):
         subprocess.check_call(["./configure"])
         subprocess.check_call(["make"])
 
-    def __init__(self):
-        self.info = Info(info_csv)
+    def __init__(self, benchmark_path):
+        self.info = Info()
         self.benchmark_path = benchmark_path
         self.name = "Valgrind + GCC"
 
