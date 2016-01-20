@@ -46,7 +46,7 @@ class Compcert(Tool):
             output_dict = {}
             spec_dict = self.info.get_spec_dict()
             mapping_dict = self.info.get_file_mapping()
-            for i in range(1, 3):#len(spec_dict.keys()) + 1):
+            for i in range(1, len(spec_dict.keys()) + 1):
                 output_dict[i] = {"count": spec_dict[i]["count"], "TP": 0, "FP": 0}
                 file_prefix = mapping_dict[i]
                 print self.name + " being tested on folder " + cur_dir + " and file " + file_prefix + ".c"
@@ -66,7 +66,7 @@ class Compcert(Tool):
                             signal.signal(signal.SIGALRM, self.signal_handler)
                             signal.alarm(10)
                             subprocess.check_output(compcert_command)#, stderr=subprocess.STDOUT)
-                    except subprocess.CalledProcessError:
+                    except subprocess.CalledProcessError as e:
                         if "w_Defects" in cur_dir:
                             output_dict[i]["TP"] += 1
                         else:

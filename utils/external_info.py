@@ -41,18 +41,20 @@ def sanitize_cil_file(file_path):
     sanitize = ["stdlib.h", "stdio.h", "math.h", "string.h", "pthread.h", "ctype.h", "unistd.h", "limits.h"]
     with open(abs_path,'w') as new_file:
         with open(file_path) as old_file:
+            extern_found = False
             for line in old_file:
                 write = True
-                for word in sanitize:
-                    if word in line:
-                        write = False
-                if "extern  __attribute__((__nothrow__)) int ( __attribute__((__leaf__)) rand)(void)" in line:
-                    write = False
+                # for word in sanitize:
+                #     if word in line:
+                #         write = False
+                if "extern" in line:
+                    extern_found = True
 
-                if "__attribute__" in line:
-                    write = False
+                if extern_found and ";" in line:
+                    extern_found = False
+                    continue
 
-                if write:
+                if write and (not extern_found):
                     new_file.write(line)
 
     close(fh)
