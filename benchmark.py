@@ -58,6 +58,21 @@ def tabulate_itc_criteria(output_dict, info_dict):
     map(lambda x : [x, ])
 
 
+def run_rv_benchmark():
+    global tools, numbers
+    tools = [CompcertRV(path), ValgrindRV(path), FramaCRV(path), UBSanRV(path)]
+    map(lambda x: x.run(), tools)
+    numbers = []
+    map(lambda x: numbers.append([x.get_tool_name(), x.get_numbers()["TP"], x.get_numbers()["FP"]]), tools)
+    error_codes = reduce(lambda x, y: merge(x, y), map(lambda z: z.get_errors(), tools))
+    tabulate_number_data(numbers)
+    tabulate_error_codes(error_codes)
+
+
+def run_itc_benchmark():
+    global tools
+    tools = [Compcert(path)]
+    map(lambda x: x.run(), tools)
 
 
 if __name__ == '__main__':
@@ -66,14 +81,6 @@ if __name__ == '__main__':
     else:
         path = sys.argv[1]
         if sys.argv[2] == "rv":
-            tools = [CompcertRV(path), ValgrindRV(path), FramaCRV(path), UBSanRV(path)]
-            map(lambda x: x.run(), tools)
-            numbers = []
-            map(lambda x: numbers.append([x.get_tool_name(), x.get_numbers()["TP"], x.get_numbers()["FP"]]), tools)
-            error_codes = reduce(lambda x, y: merge(x, y), map(lambda z: z.get_errors(), tools))
-            tabulate_number_data(numbers)
-            tabulate_error_codes(error_codes)
+            run_rv_benchmark()
         if sys.argv[2] == "itc":
-            print path
-            tools = [Compcert(path)]
-            map(lambda x: x.run(), tools)
+            run_itc_benchmark()
