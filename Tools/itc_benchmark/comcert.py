@@ -1,8 +1,8 @@
 import os
 import subprocess
-import utils.utils
-from Tools.rv_benchmark.tool import Tool
-from utils.utils import Info
+import utils.external_info
+from tools.rv_benchmark.tool import Tool
+from utils.external_info import Info
 import progressbar
 import signal
 
@@ -25,7 +25,7 @@ class Compcert(Tool):
         if not os.path.exists(relevant_file_path):
             return []
         bootstrap_file_path = os.path.join(temp_path, file_prefix + "-temp.c")
-        utils.utils.bootstrap_file(relevant_file_path, bootstrap_file_path, vflag)
+        utils.external_info.bootstrap_file(relevant_file_path, bootstrap_file_path, vflag)
         cilly_command = ["cilly", "--merge", "--keepmerged", "--save-temps=" + temp_path,
                          "-I" + os.path.join(self.benchmark_path, "include"),
                          bootstrap_file_path]
@@ -37,7 +37,7 @@ class Compcert(Tool):
         if not os.path.exists(cil_file):
             return []
 
-        utils.utils.sanitize_cil_file(cil_file)
+        utils.external_info.sanitize_cil_file(cil_file)
         return ["ccomp", "-interp", cil_file]
 
     def run(self, verbose=False, log_location=None):
@@ -46,18 +46,18 @@ class Compcert(Tool):
             output_dict = {}
             spec_dict = self.info.get_spec_dict()
             mapping_dict = self.info.get_file_mapping()
-            for i in range(1, len(spec_dict.keys()) + 1):
+            for i in range(1, 3):#len(spec_dict.keys()) + 1):
                 output_dict[i] = {"count": spec_dict[i]["count"], "TP": 0, "FP": 0}
                 file_prefix = mapping_dict[i]
                 print self.name + " being tested on folder " + cur_dir + " and file " + file_prefix + ".c"
-                bar = progressbar.ProgressBar()
+                bar = progressbar.ProgressBar(redirect_stdout=True)
                 for j in bar(range(1, spec_dict[i]["count"])):
                     vflag = str('%03d' % j)
                     cilly_command = self.get_cilly_commmand(cur_dir, file_prefix, vflag)
                     if len(cilly_command) == 0:
                         break
                     try:
-                        subprocess.check_output(cilly_command, stderr=subprocess.STDOUT)
+                        subprocess.check_output(cilly_command)#, stderr=subprocess.STDOUT)
                     except subprocess.CalledProcessError:
                         continue
                     try:

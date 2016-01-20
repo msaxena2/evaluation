@@ -1,8 +1,8 @@
 import os
 import subprocess
 
-from Tools.rv_benchmark.tool import Tool
-from utils.utils import Info
+from tools.rv_benchmark.tool import Tool
+from utils.external_info import Info
 import progressbar
 import signal
 
@@ -18,7 +18,7 @@ class Valgrind(Tool):
         output_dict = {}
         spec_dict = self.info.get_spec_dict()
         os.chdir(self.benchmark_path)
-        for i in range(1, len(spec_dict.keys()) + 1):
+        for i in range(1, 3):#len(spec_dict.keys()) + 1):
             output_dict[i] = {"count": spec_dict[i]["count"], "TP": 0, "FP": 0}
             print self.name + " being tested on file " + str(i)
             bar = progressbar.ProgressBar()
@@ -28,9 +28,9 @@ class Valgrind(Tool):
                     signal.signal(signal.SIGALRM, self.signal_handler)
                     signal.alarm(40)
                     mode = "TP"
-                    output_w = subprocess.check_output(["valgrind", "--error-exitcode=-1", "./01.w_Defects/01_w_Defects"] + arg, stderr=subprocess.STDOUT)
+                    output_w = subprocess.check_output(["valgrind", "--error-exitcode=-1", "./01.w_Defects/01_w_Defects"] + arg)#, stderr=subprocess.STDOUT)
                     mode = "FP"
-                    output_wo = subprocess.check_output(["valgrind", "--error-exitcode=-1", "./02.wo_Defects/02_wo_Defects"] + arg, stderr=subprocess.STDOUT)
+                    output_wo = subprocess.check_output(["valgrind", "--error-exitcode=-1", "./02.wo_Defects/02_wo_Defects"] + arg)#, stderr=subprocess.STDOUT)
                 except subprocess.CalledProcessError:
                     if mode == "TP":
                         output_dict[i]["TP"] += 1
@@ -55,15 +55,13 @@ class Valgrind(Tool):
         return self.name
 
 
-    def init(self):
-        os.chdir(os.path.expanduser(self.benchmark_path))
+    def __init__(self, benchmark_path):
+        os.chdir(os.path.expanduser(benchmark_path))
         subprocess.check_call(["./bootstrap"])
         subprocess.check_call(["automake"])
         subprocess.check_call(["autoconf"])
         subprocess.check_call(["./configure"])
         subprocess.check_call(["make"])
-
-    def __init__(self, benchmark_path):
         self.info = Info()
         self.benchmark_path = benchmark_path
         self.name = "Valgrind + GCC"

@@ -3,7 +3,7 @@ import os
 import signal
 import subprocess32 as subprocess
 
-from Tools.rv_benchmark.tool import Tool
+from tools.rv_benchmark.tool import Tool
 import progressbar
 
 class TimeoutException(Exception):

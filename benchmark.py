@@ -1,15 +1,15 @@
 __author__ = 'manasvi'
 
-from Tools.rv_benchmark.frama_c_rv import FramaCRV
-from Tools.rv_benchmark.ub_san_rv import UBSanRV
-from Tools.rv_benchmark.compcert_rv import CompcertRV
-from Tools.rv_benchmark.valgrind_rv import ValgrindRV
-from Tools.itc_benchmark.valgrind import Valgrind
-from Tools.itc_benchmark.comcert import Compcert
+from tools.rv_benchmark.frama_c_rv import FramaCRV
+from tools.rv_benchmark.ub_san_rv import UBSanRV
+from tools.rv_benchmark.compcert_rv import CompcertRV
+from tools.rv_benchmark.valgrind_rv import ValgrindRV
+from tools.itc_benchmark.valgrind import Valgrind
+from tools.itc_benchmark.comcert import Compcert
 import math
 from tabulate import tabulate
 import sys
-from  utils.utils import Info
+from  utils.external_info import Info
 
 error_info = Info().get_spec_dict()
 
@@ -59,37 +59,40 @@ def run_rv_benchmark():
     tabulate_number_data(numbers)
     tabulate_error_codes(error_codes)
 
+
 def crunch_data(output_dict):
     return_dict = {}
     for key in output_dict:
-        return_key = error_info[key][2]
+        return_key = error_info[key]["type"]
         if return_key not in return_dict:
             return_dict[return_key] = {"count": 0, "TP": 0,
                                        "FP": 0}
-        else:
-            return_dict[return_key]["count"] += output_dict["key"]["count"]
-            return_dict[return_key]["TP"] += output_dict["key"]["TP"]
-            return_dict[return_key]["FP"] += output_dict["key"]["FP"]
 
-    return return_key
+        return_dict[return_key]["count"] += output_dict[key]["count"]
+        return_dict[return_key]["TP"] += output_dict[key]["TP"]
+        return_dict[return_key]["FP"] += output_dict[key]["FP"]
+
+    return return_dict
 
 
 def tabulate_itc_criteria(tool_list, crunched_data):
-    table = [["\\"] + tool_list]
+    #table = [["\\"] + tool_list]
     row = []
-    for error in crunch_data[0].keys():
-        row.append(error)
+    print tool_list
+    for error in crunched_data[0].keys():
+        #row.append(error)
         for i in range(0, len(tool_list)):
-            dr = float(crunched_data[i][error]["TP"]) / crunched_data[i]["count"] * 100
-            fr = 100 - (float(crunched_data[i][error]["FP"]) / crunched_data[i]["count"] * 100)
+            dr = float(crunched_data[i][error]["TP"]) / crunched_data[i][error]["count"] * 100
+            fr = 100 - (float(crunched_data[i][error]["FP"]) / crunched_data[i][error]["count"] * 100)
             prod = math.sqrt(dr * fr)
-            row.append(dr, fr, prod)
-    tabulate(row)
+        row = row + [dr, fr, prod]
+    table.append(row)
+    print tabulate(row, tablefmt="fancy_grid", headers="firstrow")
 
 
 def run_itc_benchmark():
     global tools
-    tools = [Compcert(path)]
+    tools = [Valgrind(path), Compcert(path)]
     output_dicts = map(lambda x: x.run(), tools)
     names_list = map(lambda x: x.get_name(), tools)
     data_list = map(lambda x: crunch_data(x), output_dicts)
