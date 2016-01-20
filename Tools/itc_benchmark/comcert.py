@@ -38,7 +38,7 @@ class Compcert(Tool):
             return []
 
         utils.external_info.sanitize_cil_file(cil_file)
-        return ["ccomp", "-interp", cil_file]
+        return ["ccomp", "-interp", "-fbitfields", cil_file]
 
     def run(self, verbose=False, log_location=None):
         relevant_dirs = ["01.w_Defects", "02.wo_Defects"]
@@ -67,6 +67,8 @@ class Compcert(Tool):
                             signal.alarm(10)
                             subprocess.check_output(compcert_command)#, stderr=subprocess.STDOUT)
                     except subprocess.CalledProcessError as e:
+                        if "Fatal error; compilation aborted." in e.output:
+                            continue
                         if "w_Defects" in cur_dir:
                             output_dict[i]["TP"] += 1
                         else:
