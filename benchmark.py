@@ -87,7 +87,7 @@ def tabulate_itc_criteria(tool_list, crunched_data):
             prod = math.sqrt(dr * fr)
         row = row + [dr, fr, prod]
     table.append(row)
-    print tabulate(row, tablefmt="fancy_grid", headers="firstrow")
+    print tabulate(row, tablefmt="fancy_grid")
 
 
 def run_itc_benchmark():

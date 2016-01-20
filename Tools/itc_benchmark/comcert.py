@@ -50,8 +50,8 @@ class Compcert(Tool):
                 output_dict[i] = {"count": spec_dict[i]["count"], "TP": 0, "FP": 0}
                 file_prefix = mapping_dict[i]
                 print self.name + " being tested on folder " + cur_dir + " and file " + file_prefix + ".c"
-                bar = progressbar.ProgressBar(redirect_stdout=True)
-                for j in bar(range(1, spec_dict[i]["count"])):
+                #bar = progressbar.ProgressBar(redirect_stdout=True)
+                for j in range(1, spec_dict[i]["count"]):
                     vflag = str('%03d' % j)
                     cilly_command = self.get_cilly_commmand(cur_dir, file_prefix, vflag)
                     if len(cilly_command) == 0:
@@ -65,7 +65,7 @@ class Compcert(Tool):
                         if len(compcert_command) != 0:
                             signal.signal(signal.SIGALRM, self.signal_handler)
                             signal.alarm(10)
-                            subprocess.check_output(compcert_command, stderr=subprocess.STDOUT)
+                            subprocess.check_output(compcert_command)#, stderr=subprocess.STDOUT)
                     except subprocess.CalledProcessError:
                         if "w_Defects" in cur_dir:
                             output_dict[i]["TP"] += 1

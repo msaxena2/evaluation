@@ -21,8 +21,8 @@ class Valgrind(Tool):
         for i in range(1, 3):#len(spec_dict.keys()) + 1):
             output_dict[i] = {"count": spec_dict[i]["count"], "TP": 0, "FP": 0}
             print self.name + " being tested on file " + str(i)
-            bar = progressbar.ProgressBar()
-            for j in bar(range(1, spec_dict[i]["count"])):
+            #bar = progressbar.ProgressBar()
+            for j in range(1, spec_dict[i]["count"]):
                 arg = [str('%03d' % i) + str('%03d' % j)]
                 try:
                     signal.signal(signal.SIGALRM, self.signal_handler)
