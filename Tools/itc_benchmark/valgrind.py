@@ -64,7 +64,7 @@ class Valgrind(Tool):
         subprocess.check_call(["make"])
         self.info = Info()
         self.benchmark_path = benchmark_path
-        self.name = "Valgrind + GCC"
+        self.name = "Valg"
 
     def analyze(self):
         Tool.analyze(self)
