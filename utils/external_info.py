@@ -41,7 +41,7 @@ def sanitize_cil_file(file_path):
     with open(abs_path,'w') as new_file:
         with open(file_path) as old_file:
             for line in old_file:
-                if "stdlib.h" in line and "374" in line:
+                if "stdlib.h" in line or "stdio.h" in line:
                     continue
                 if "extern  __attribute__((__nothrow__)) int ( __attribute__((__leaf__)) rand)(void)" in line:
                     continue
