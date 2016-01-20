@@ -87,17 +87,17 @@ def tabulate_itc_criteria(tool_list, crunched_data):
     for error in crunched_data[0].keys():
         row.append(error)
         for i in range(0, len(tool_list)):
-            dr = float(crunched_data[i][error]["TP"]) / crunched_data[i][error]["count"] * 100
+            dr = (float(crunched_data[i][error]["TP"]) / float(crunched_data[i][error]["count"])) * 100
             fr = 100 - (float(crunched_data[i][error]["FP"]) / crunched_data[i][error]["count"] * 100)
             prod = math.sqrt(dr * fr)
             row = row + [dr, fr, prod]
-    table.append(row)
+        table.append(row)
     print tabulate(table, headers=header, tablefmt="fancy_grid")
 
 
 def run_itc_benchmark():
     global tools
-    tools = [Valgrind(path), Compcert(path)]
+    tools = [Valgrind(path)]#, Compcert(path)]
     output_dicts = map(lambda x: x.run(), tools)
     names_list = map(lambda x: x.get_name(), tools)
     data_list = map(lambda x: crunch_data(x), output_dicts)

@@ -48,6 +48,10 @@ def sanitize_cil_file(file_path):
                         write = False
                 if "extern  __attribute__((__nothrow__)) int ( __attribute__((__leaf__)) rand)(void)" in line:
                     write = False
+
+                if "__attribute__" in line:
+                    write = False
+
                 if write:
                     new_file.write(line)
 

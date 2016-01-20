@@ -26,11 +26,11 @@ class Valgrind(Tool):
                 arg = [str('%03d' % i) + str('%03d' % j)]
                 try:
                     signal.signal(signal.SIGALRM, self.signal_handler)
-                    signal.alarm(40)
+                    #signal.alarm(10)
                     mode = "TP"
-                    output_w = subprocess.check_output(["valgrind", "--error-exitcode=-1", "./01.w_Defects/01_w_Defects"] + arg)#, stderr=subprocess.STDOUT)
+                    output_w = subprocess.check_output(["valgrind", "--error-exitcode=20", "./01.w_Defects/01_w_Defects"] + arg)#, stderr=subprocess.STDOUT)
                     mode = "FP"
-                    output_wo = subprocess.check_output(["valgrind", "--error-exitcode=-1", "./02.wo_Defects/02_wo_Defects"] + arg)#, stderr=subprocess.STDOUT)
+                    output_wo = subprocess.check_output(["valgrind", "--error-exitcode=20", "./02.wo_Defects/02_wo_Defects"] + arg)#, stderr=subprocess.STDOUT)
                 except subprocess.CalledProcessError:
                     if mode == "TP":
                         output_dict[i]["TP"] += 1
