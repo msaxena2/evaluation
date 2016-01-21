@@ -30,6 +30,8 @@ class Valgrind(Tool):
                     output_w = subprocess.check_output(["valgrind", "--error-exitcode=20", "./01.w_Defects/01_w_Defects"] + arg)#, stderr=subprocess.STDOUT)
                 except subprocess.CalledProcessError:
                     output_dict[i]["TP"] += 1
+                except TimeoutException:
+                    pass
                 try:
                     signal.alarm(10)
                     output_wo = subprocess.check_output(["valgrind", "--error-exitcode=20", "./02.wo_Defects/02_wo_Defects"] + arg)#, stderr=subprocess.STDOUT)
