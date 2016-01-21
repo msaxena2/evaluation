@@ -18,7 +18,7 @@ class Valgrind(Tool):
         output_dict = {}
         spec_dict = self.info.get_spec_dict()
         os.chdir(self.benchmark_path)
-        for i in range(1, 3):#len(spec_dict.keys()) + 1):
+        for i in range(1, len(spec_dict.keys()) + 1):
             output_dict[i] = {"count": spec_dict[i]["count"], "TP": 0, "FP": 0}
             print self.name + " being tested on file " + str(i)
             #bar = progressbar.ProgressBar()
@@ -27,15 +27,14 @@ class Valgrind(Tool):
                 try:
                     signal.signal(signal.SIGALRM, self.signal_handler)
                     signal.alarm(10)
-                    mode = "TP"
                     output_w = subprocess.check_output(["valgrind", "--error-exitcode=20", "./01.w_Defects/01_w_Defects"] + arg)#, stderr=subprocess.STDOUT)
-                    mode = "FP"
+                except subprocess.CalledProcessError:
+                    output_dict[i]["TP"] += 1
+                try:
+                    signal.alarm(10)
                     output_wo = subprocess.check_output(["valgrind", "--error-exitcode=20", "./02.wo_Defects/02_wo_Defects"] + arg)#, stderr=subprocess.STDOUT)
                 except subprocess.CalledProcessError:
-                    if mode == "TP":
-                        output_dict[i]["TP"] += 1
-                    else:
-                        output_dict[i]["FP"] += 1
+                    output_dict[i]["FP"] += 1
                 except TimeoutException:
                     continue
                 finally:

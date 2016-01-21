@@ -77,7 +77,7 @@ class Compcert(Tool):
                         continue
                     finally:
                         signal.alarm(0)
-            return output_dict
+        return output_dict
 
 
     def get_name(self):
