@@ -42,12 +42,13 @@ class Compcert(Tool):
 
     def run(self, verbose=False, log_location=None):
         relevant_dirs = ["01.w_Defects", "02.wo_Defects"]
+        output_dict = {}
         for cur_dir in relevant_dirs:
-            output_dict = {}
             spec_dict = self.info.get_spec_dict()
             mapping_dict = self.info.get_file_mapping()
             for i in range(1, len(spec_dict.keys()) + 1):
-                output_dict[i] = {"count": spec_dict[i]["count"], "TP": 0, "FP": 0}
+                if i not in output_dict:
+                    output_dict[i] = {"count": spec_dict[i]["count"], "TP": 0, "FP": 0}
                 file_prefix = mapping_dict[i]
                 print self.name + " being tested on folder " + cur_dir + " and file " + file_prefix + ".c"
                 #bar = progressbar.ProgressBar(redirect_stdout=True)
