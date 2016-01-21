@@ -65,7 +65,21 @@ def sanitize_cil_file(file_path):
 def checkdir(dir):
     return dir in relevant_itc_dirs
 
+def get_cilly_commmand(benchmark_path, cur_dir, file_prefix, temp_dir_name, vflag):
+    cur_path = os.path.join(benchmark_path, cur_dir)
+    temp_path = os.path.join(cur_path, temp_dir_name)
+    if not os.path.exists(temp_path):
+        os.mkdir(temp_path)
 
+    relevant_file_path = os.path.join(cur_path, file_prefix + ".c")
+    if not os.path.exists(relevant_file_path):
+        return []
+    bootstrap_file_path = os.path.join(temp_path, file_prefix + "-temp.c")
+    bootstrap_file(relevant_file_path, bootstrap_file_path, vflag)
+    cilly_command = ["cilly", "--merge", "--keepmerged", "--save-temps=" + temp_path,
+                     "-I" + os.path.join(benchmark_path, "include"),
+                     bootstrap_file_path]
+    return cilly_command
 
 
 class Info:
