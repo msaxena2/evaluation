@@ -97,7 +97,7 @@ def tabulate_itc_criteria(tool_list, crunched_data):
 
 def run_itc_benchmark():
     global tools
-    tools = [Valgrind(path), Compcert(path)]
+    tools = [Compcert(path)]
     output_dicts = map(lambda x: x.run(), tools)
     names_list = map(lambda x: x.get_name(), tools)
     data_list = map(lambda x: crunch_data(x), output_dicts)
