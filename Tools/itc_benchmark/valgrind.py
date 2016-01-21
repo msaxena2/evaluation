@@ -19,7 +19,8 @@ class Valgrind(Tool):
         spec_dict = self.info.get_spec_dict()
         os.chdir(self.benchmark_path)
         for i in range(1, len(spec_dict.keys()) + 1):
-            output_dict[i] = {"count": spec_dict[i]["count"], "TP": 0, "FP": 0}
+            if i not in output_dict:
+                output_dict[i] = {"count": spec_dict[i]["count"], "TP": 0, "FP": 0}
             print self.name + " being tested on file " + str(i)
             #bar = progressbar.ProgressBar()
             for j in range(1, spec_dict[i]["count"]):
