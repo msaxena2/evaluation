@@ -38,10 +38,10 @@ class Compcert(Tool):
             return []
 
         utils.external_info.sanitize_cil_file(cil_file)
-        return ["ccomp", "-interp", "-fbitfields", cil_file]
+        return ["ccomp", "-interp", "-fbitfields", "-fstruct-passing", cil_file]
 
     def run(self, verbose=False, log_location=None):
-        relevant_dirs = ["01.w_Defects", "02.wo_Defects"]
+        relevant_dirs = ["02.wo_Defects", "01.w_Defects"]
         output_dict = {}
         for cur_dir in relevant_dirs:
             spec_dict = self.info.get_spec_dict()
@@ -58,7 +58,7 @@ class Compcert(Tool):
                     if len(cilly_command) == 0:
                         break
                     try:
-                        subprocess.check_output(cilly_command)#, stderr=subprocess.STDOUT)
+                        subprocess.check_output(cilly_command, stderr=subprocess.STDOUT)
                     except subprocess.CalledProcessError:
                         continue
                     try:
