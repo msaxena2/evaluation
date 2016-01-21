@@ -20,11 +20,11 @@ class FramaC(Tool):
         if not os.path.exists(cil_file):
             return []
 
-        utils.external_info.sanitize_cil_file(cil_file)
-        return ["ccomp", "-interp", "-fbitfields", "-fstruct-passing", cil_file]
+        return ["frama-c", "-val", cil_file]
+
 
     def run(self, verbose=False, log_location=None):
-        relevant_dirs = ["02.wo_Defects", "01.w_Defects"]
+        relevant_dirs = ["01.w_Defects", "02.wo_Defects"]
         output_dict = {}
         for cur_dir in relevant_dirs:
             spec_dict = self.info.get_spec_dict()
@@ -46,18 +46,22 @@ class FramaC(Tool):
                     except subprocess.CalledProcessError:
                         continue
                     try:
-                        compcert_command = self.get_compcert_command(cur_dir, file_prefix)
-                        if len(compcert_command) != 0:
-                            signal.signal(signal.SIGALRM, self.signal_handler)
-                            signal.alarm(10)
-                            subprocess.check_output(compcert_command)  # , stderr=subprocess.STDOUT)
-                    except subprocess.CalledProcessError as e:
-                        if "Fatal error; compilation aborted." in e.output:
+                        framac_command = self.get_compcert_command(cur_dir, file_prefix)
+                        if len(framac_command) == 0:
                             continue
-                        if "w_Defects" in cur_dir:
-                            output_dict[i]["TP"] += 1
-                        else:
-                            output_dict[i]["FP"] += 1
+
+                        signal.signal(signal.SIGALRM, self.signal_handler)
+                        signal.alarm(10)
+                        output = subprocess.check_output(framac_command)
+                        if "warning" in output and file_prefix +"-temp.cil.c" in output:
+                            if "w_Defects" in cur_dir:
+                                output_dict[i]["TP"] += 1
+                            else:
+                                output_dict[i]["FP"] += 1
+                                             
+                    except subprocess.CalledProcessError:
+                        #plugin error
+                        continue
                     except TimeoutException:
                         continue
                     finally:
