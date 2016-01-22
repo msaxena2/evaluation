@@ -24,8 +24,12 @@ class Compcert(Tool):
         return ["ccomp", "-interp", "-fbitfields", "-fstruct-passing", cil_file]
 
     def run(self, verbose=False, log_location=None):
-        relevant_dirs = ["02.wo_Defects", "01.w_Defects"]
+        relevant_dirs = ["02.wo_Defects"]
         output_dict = {}
+        log_file = None
+        if log_location is not None:
+            log_file = open(log_location, 'w+')
+
         for cur_dir in relevant_dirs:
             spec_dict = self.info.get_spec_dict()
             mapping_dict = self.info.get_file_mapping()
@@ -50,14 +54,23 @@ class Compcert(Tool):
                         if len(compcert_command) != 0:
                             signal.signal(signal.SIGALRM, self.signal_handler)
                             signal.alarm(10)
-                            subprocess.check_output(compcert_command)  # , stderr=subprocess.STDOUT)
+                            output = subprocess.check_output(compcert_command, stderr=subprocess.STDOUT)
+                            if log_location is not None:
+                                log_file.write("----- Folder " +  cur_dir + " file " + str(i) + "flag " + str(vflag) + "--- marked OK.")
+                                log_file.write(output)
                     except subprocess.CalledProcessError as e:
-                        if "Fatal error; compilation aborted." in e.output:
-                            continue
-                        if "w_Defects" in cur_dir:
-                            output_dict[i]["TP"] += 1
+                        signal.alarm(0)
+                        print e.output
+                        input = raw_input("Is this an actual error?: ")
+                        if input == "y":
+                            if "w_Defects" in cur_dir:
+                                output_dict[i]["TP"] += 1
+                            else:
+                                output_dict[i]["FP"] += 1
+                            log_file.write("----- Folder " +  cur_dir + " file " + str(i) + "flag " + str(vflag) + "--- marked Not OK.")
                         else:
-                            output_dict[i]["FP"] += 1
+                            log_file.write("----- Folder " +  cur_dir + " file " + str(i) + "flag " + str(vflag) + "--- marked OK.")
+                            log_file.write(output)
                     except TimeoutException:
                         continue
                     finally:

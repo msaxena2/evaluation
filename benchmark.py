@@ -8,6 +8,7 @@ from tools.itc_benchmark.valgrind import Valgrind
 from tools.itc_benchmark.comcert import Compcert
 from tools.itc_benchmark.frama_c import FramaC
 import math
+import os
 from tabulate import tabulate
 import sys
 from  utils.external_info import Info
@@ -98,8 +99,8 @@ def tabulate_itc_criteria(tool_list, crunched_data):
 
 def run_itc_benchmark():
     global tools
-    tools = [FramaC(path)]
-    output_dicts = map(lambda x: x.run(), tools)
+    tools = [Compcert(path)]
+    output_dicts = map(lambda x: x.run(log_location=os.path.expanduser("~/manual_results.txt")), tools)
     names_list = map(lambda x: x.get_name(), tools)
     data_list = map(lambda x: crunch_data(x), output_dicts)
     tabulate_itc_criteria(names_list, data_list)
