@@ -4,7 +4,6 @@ from tempfile import mkstemp
 from shutil import move
 from os import remove, close
 
-
 relevant_itc_dirs = ["01.w_defects", "02.wo_defects"]
 
 
@@ -15,7 +14,7 @@ def bootstrap_file(file_path, temp_store_file_path, vflag):
         with open(file_path, 'r') as cur_file:
             for line in cur_file:
                 if "extern volatile int vflag" in line:
-                    temp_file.write("int vflag = " + vflag+";\n")
+                    temp_file.write("int vflag = " + vflag + ";\n")
                     continue
                 if "_main" in line:
                     temp_file.write("int idx, sink;\n")
@@ -39,7 +38,7 @@ def bootstrap_file(file_path, temp_store_file_path, vflag):
 def sanitize_cil_file(file_path):
     fh, abs_path = mkstemp()
     sanitize = ["stdlib.h", "stdio.h", "math.h", "string.h", "pthread.h", "ctype.h", "unistd.h", "limits.h"]
-    with open(abs_path,'w') as new_file:
+    with open(abs_path, 'w') as new_file:
         with open(file_path) as old_file:
             extern_found = False
             for line in old_file:
@@ -65,21 +64,6 @@ def sanitize_cil_file(file_path):
 def checkdir(dir):
     return dir in relevant_itc_dirs
 
-def get_cilly_commmand(benchmark_path, cur_dir, file_prefix, temp_dir_name, vflag):
-    cur_path = os.path.join(benchmark_path, cur_dir)
-    temp_path = os.path.join(cur_path, temp_dir_name)
-    if not os.path.exists(temp_path):
-        os.mkdir(temp_path)
-
-    relevant_file_path = os.path.join(cur_path, file_prefix + ".c")
-    if not os.path.exists(relevant_file_path):
-        return []
-    bootstrap_file_path = os.path.join(temp_path, file_prefix + "-temp.c")
-    bootstrap_file(relevant_file_path, bootstrap_file_path, vflag)
-    cilly_command = ["cilly", "--merge", "--keepmerged", "--save-temps=" + temp_path,
-                     "-I" + os.path.join(benchmark_path, "include"),
-                     bootstrap_file_path]
-    return cilly_command
 
 
 class Info:
