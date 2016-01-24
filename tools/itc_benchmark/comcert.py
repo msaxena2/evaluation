@@ -43,7 +43,7 @@ class Compcert(Tool):
         for cur_dir in relevant_dirs:
             spec_dict = self.info.get_spec_dict()
             mapping_dict = self.info.get_file_mapping()
-            for i in range(1, 3):  # len(spec_dict.keys()) + 1):
+            for i in range(1, len(spec_dict.keys()) + 1):
                 if i not in output_dict:
                     output_dict[i] = {"count": spec_dict[i]["count"], "TP": 0, "FP": 0}
                 file_prefix = mapping_dict[i]
@@ -52,16 +52,17 @@ class Compcert(Tool):
                 for j in range(1, spec_dict[i]["count"]):
                     vflag = str('%03d' % j)
                     try:
-                        compcert_command = self.get_compcert_command(self.benchmark_path, cur_dir,
-                                                                     file_prefix, vflag)
+                        compcert_command = self.get_compcert_command(cur_dir, file_prefix, "compcert_temp", vflag)
+                        print compcert_command
                         if len(compcert_command) != 0:
                             signal.signal(signal.SIGALRM, self.signal_handler)
                             signal.alarm(10)
-                            output = subprocess.check_output(compcert_command, stderr=subprocess.STDOUT)
+                            subprocess.check_output(compcert_command, stderr=subprocess.STDOUT)
                     except subprocess.CalledProcessError as e:
-                        if "ERROR" not in output or "Error" not in output:
+                        print e.output
+                        if "ERROR" not in e.output or "Error" not in e.output:
                             result = False
-                        elif "Stuck State: call" in output:
+                        elif "Stuck State: call" in e.output:
                             result = False
                         else:
                             result = True
