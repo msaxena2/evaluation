@@ -15,6 +15,7 @@ class Compcert(Tool):
     def signal_handler(self, signum, frame):
         raise TimeoutException("Timed out!")
 
+
     def get_compcert_command(self, cur_dir, file_prefix, temp_dir_name, vflag):
         cur_path = os.path.join(self.benchmark_path, cur_dir)
         temp_path = os.path.join(cur_path, temp_dir_name)
@@ -29,6 +30,8 @@ class Compcert(Tool):
         return ["ccomp", "-interp", "-fbitfields", "-fstruct-passing",
                 "-I" + os.path.join(self.benchmark_path, "include"),
                 bootstrap_file_path]
+
+
 
     def run(self, verbose=False, log_location=None):
         relevant_dirs = ["02.w_Defects", "02.wo_Defects"]
@@ -54,10 +57,15 @@ class Compcert(Tool):
                         if len(compcert_command) != 0:
                             signal.signal(signal.SIGALRM, self.signal_handler)
                             signal.alarm(10)
-                            subprocess.check_output(compcert_command, stderr=subprocess.STDOUT)
+                            output = subprocess.check_output(compcert_command, stderr=subprocess.STDOUT)
                     except subprocess.CalledProcessError as e:
-
-                        if "w_Defects" in cur_dir:
+                        if "ERROR" not in output or "Error" not in output:
+                            result = False
+                        elif "Stuck State: call" in output:
+                            result = False
+                        else:
+                            result = True
+                        if "w_Defects" in cur_dir and result:
                             output_dict[i]["TP"] += 1
                         else:
                             output_dict[i]["FP"] += 1
