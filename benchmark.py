@@ -94,6 +94,15 @@ def tabulate_itc_criteria(tool_list, crunched_data):
             prod = math.sqrt(dr * (100 - fpr))
             row = row + [dr, fpr, prod]
         table.append(row)
+
+    average = ["Average"]
+    for column in range(1, len(table[0])):
+        sum = 0
+        for row in range(0, len(table)):
+            sum += table[row][column]
+        average.append(sum / (len(table)))
+
+    table.append(average)
     print tabulate(table, headers=header, tablefmt="fancy_grid")
 
 
