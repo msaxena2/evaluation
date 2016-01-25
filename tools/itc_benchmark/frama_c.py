@@ -15,6 +15,14 @@ class FramaC(Tool):
     def signal_handler(self, signum, frame):
         raise TimeoutException("Timed out!")
 
+    def analyze_output(self, output, file_name):
+        for line in output:
+            if file_name in line and "WARNING" in line.upper():
+                if "Neither code nor specification" in line:
+                    continue
+                # Simple condition for an alarm in the file
+                return True
+        return False
 
 
     def sanitize_header_file(self, original_header_path, new_header_path, framac_include_path, header_file_name):
@@ -76,7 +84,8 @@ class FramaC(Tool):
                             signal.alarm(10)
                             output = subprocess.check_output(framac_command, stderr=subprocess.STDOUT)
                             print output
-                            if "WARNING" in output.upper():
+                            verdict = self.analyze_output(output, file_prefix + ".c")
+                            if verdict:
                                 if "w_Defects" in cur_dir:
                                     output_dict[i]["TP"] += 1
                                 else:
