@@ -16,7 +16,7 @@ class FramaC(Tool):
         raise TimeoutException("Timed out!")
 
     def analyze_output(self, output, file_name):
-        for line in output:
+        for line in output.split('\n'):
             if file_name in line and "WARNING" in line.upper():
                 if "Neither code nor specification" in line:
                     continue
@@ -64,11 +64,11 @@ class FramaC(Tool):
         for cur_dir in relevant_dirs:
             spec_dict = self.info.get_spec_dict()
             mapping_dict = self.info.get_file_mapping()
-            for i in range(1, 3):#len(spec_dict.keys()) + 1):
+            for i in range(1, len(spec_dict.keys()) + 1):
                 if i not in output_dict:
                     output_dict[i] = {"count": spec_dict[i]["count"], "TP": 0, "FP": 0}
                 file_prefix = mapping_dict[i]
-                print self.name + " being tested on folder " + cur_dir + " and file " + file_prefix + ".c"
+                print self.name + " being tested on folder " + cur_dir + " and file " + file_prefix
                 # bar = progressbar.ProgressBar(redirect_stdout=True)
                 framac_include_path = subprocess.check_output(["frama-c", "-print-path"])
                 for j in range(1, spec_dict[i]["count"]):
@@ -81,10 +81,10 @@ class FramaC(Tool):
                         print " ".join(framac_command)
                         if len(framac_command) != 0:
                             signal.signal(signal.SIGALRM, self.signal_handler)
-                            signal.alarm(10)
+                            #signal.alarm(10)
                             output = subprocess.check_output(framac_command, stderr=subprocess.STDOUT)
                             print output
-                            verdict = self.analyze_output(output, file_prefix + ".c")
+                            verdict = self.analyze_output(output, file_prefix)
                             if verdict:
                                 if "w_Defects" in cur_dir:
                                     output_dict[i]["TP"] += 1
