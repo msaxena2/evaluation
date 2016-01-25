@@ -57,13 +57,11 @@ class Compcert(Tool):
                             subprocess.check_output(compcert_command, stderr=subprocess.STDOUT)
                     except subprocess.CalledProcessError as e:
                         print e.output
-                        if "ERROR" not in e.output or "Error" not in e.output or "Undefined behavior" not in e.output:
-                            result = False
-                        elif "Stuck State: calling" in e.output:
-                            result = False
-                        else:
-                            result = True
-                        if "w_Defects" in cur_dir and result:
+                        if "ERROR" not in e.output.upper() and "UNDEFINED" not in e.output.upper():
+                            continue
+                        if "Stuck state: calling" in e.output:
+                            continue
+                        if "w_Defects" in cur_dir:
                             output_dict[i]["TP"] += 1
                         else:
                             output_dict[i]["FP"] += 1

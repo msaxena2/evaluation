@@ -99,7 +99,7 @@ def tabulate_itc_criteria(tool_list, crunched_data):
 
 def run_itc_benchmark():
     global tools
-    tools = [Compcert(path)]
+    tools = [FramaC(path)]
     output_dicts = map(lambda x: x.run(log_location=os.path.expanduser("~/manual_results.txt")), tools)
     names_list = map(lambda x: x.get_name(), tools)
     data_list = map(lambda x: crunch_data(x), output_dicts)
