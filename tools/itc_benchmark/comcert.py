@@ -15,7 +15,6 @@ class Compcert(Tool):
     def signal_handler(self, signum, frame):
         raise TimeoutException("Timed out!")
 
-
     def get_compcert_command(self, cur_dir, file_prefix, temp_dir_name, vflag):
         cur_path = os.path.join(self.benchmark_path, cur_dir)
         temp_path = os.path.join(cur_path, temp_dir_name)
@@ -31,10 +30,8 @@ class Compcert(Tool):
                 "-I" + os.path.join(self.benchmark_path, "include"),
                 bootstrap_file_path]
 
-
-
     def run(self, verbose=False, log_location=None):
-        relevant_dirs = ["02.w_Defects", "02.wo_Defects"]
+        relevant_dirs = ["01.w_Defects", "02.wo_Defects"]
         output_dict = {}
         log_file = None
         if log_location is not None:
@@ -52,7 +49,7 @@ class Compcert(Tool):
                 for j in range(1, spec_dict[i]["count"]):
                     vflag = str('%03d' % j)
                     try:
-                        compcert_command = self.get_compcert_command(cur_dir, file_prefix, "compcert_temp", vflag)
+                        compcert_command = self.get_compcert_command(cur_dir, file_prefix, "bootstrap_dir", vflag)
                         print compcert_command
                         if len(compcert_command) != 0:
                             signal.signal(signal.SIGALRM, self.signal_handler)
@@ -60,9 +57,9 @@ class Compcert(Tool):
                             subprocess.check_output(compcert_command, stderr=subprocess.STDOUT)
                     except subprocess.CalledProcessError as e:
                         print e.output
-                        if "ERROR" not in e.output or "Error" not in e.output:
+                        if "ERROR" not in e.output or "Error" not in e.output or "Undefined behavior" not in e.output:
                             result = False
-                        elif "Stuck State: call" in e.output:
+                        elif "Stuck State: calling" in e.output:
                             result = False
                         else:
                             result = True
