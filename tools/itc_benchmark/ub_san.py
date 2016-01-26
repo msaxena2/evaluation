@@ -61,7 +61,7 @@ class UBSan(Tool):
         subprocess.check_call(["./bootstrap"])
         subprocess.check_call(["automake"])
         subprocess.check_call(["autoconf"])
-        subprocess.check_call(["./configure", "CC=clang", "CFLAGS=-fsanitize=undefined -fsanitize=thread"])
+        subprocess.check_call(["./configure", "CC=clang", "CFLAGS=-fsanitize=undefined -fsanitize=thread -fsanitize=address"])
         subprocess.check_call(["make"])
         self.info = Info()
         self.benchmark_path = benchmark_path
