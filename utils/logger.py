@@ -5,7 +5,7 @@ class Logger:
     def __init__(self, log_file_path, tool_name):
         self.log_file_path = log_file_path
         self.tool_name = tool_name
-        self.log_file = open(os.path.expanduser(log_file_path), 'w+')
+        self.log_file = open(os.path.expanduser(os.path.join(log_file_path, tool_name + "-log.txt"), 'w+'))
 
 
     def sanitize_paths(self, output):
@@ -33,10 +33,10 @@ class Logger:
              self.log_file.write("Confirmed as False Positive \n")
 
          elif(result == "TO"):
-             self.log_file.write("Operation Timed Out Considered a negative")
+             self.log_file.write("Operation Timed Out Considered a negative \n")
 
          else:
-             self.log_file.write("Confirmed Negative")
+             self.log_file.write("Confirmed Negative \n")
 
 
 

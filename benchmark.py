@@ -15,7 +15,10 @@ from tabulate import tabulate
 import sys
 from  utils.external_info import Info
 
-error_info = Info().get_spec_dict()
+info = Info()
+error_info = info.get_spec_dict()
+ignore_list = info.get_ignore_list()
+ignore_dict = info.get_ignore_dict()
 
 
 def tabulate_number_data(number_table):
@@ -53,7 +56,7 @@ def merge(dict1, dict2):
     return retdict
 
 
-def run_rv_benchmark():
+def run_rv_benchmark(log_location):
     global tools, numbers
     tools = [CompcertRV(path), ValgrindRV(path), FramaCRV(path), UBSanRV(path)]
     map(lambda x: x.run(), tools)
@@ -83,7 +86,7 @@ def tabulate_itc_criteria(tool_list, crunched_data):
     header = [" "]
     for tool in tool_list:
         header.append(tool + " (DR)")
-        header.append(tool + " (FPR)")
+        header.append(tool + "100 - (FPR)")
         header.append(tool + " (P)")
 
     table = []
@@ -92,26 +95,34 @@ def tabulate_itc_criteria(tool_list, crunched_data):
         row.append(error)
         for i in range(0, len(tool_list)):
             dr = (float(crunched_data[i][error]["TP"]) / float(crunched_data[i][error]["count"])) * 100
-            fpr = (float(crunched_data[i][error]["FP"]) / crunched_data[i][error]["count"] * 100)
+            fpr = 100 - (float(crunched_data[i][error]["FP"]) / crunched_data[i][error]["count"] * 100)
             prod = math.sqrt(dr * (100 - fpr))
             row = row + [dr, fpr, prod]
         table.append(row)
 
+    count_dict = info.get_count_dict()
+    test_total = info.get_total()
     average = ["Average"]
     for column in range(1, len(table[0])):
         sum = 0
         for row in range(0, len(table)):
-            sum += table[row][column]
-        average.append(sum / (len(table)))
+            error = [row][0]
+            sum += float(table[row][column]) * (float(count_dict[error]) / test_total)
+        if column % 3 == 0:
+            prod = math.sqrt(average[-1] * average[-2])
+            average.append(prod)
+        else:
+            average.append(sum / len(table))
+
 
     table.append(average)
     print tabulate(table, headers=header, tablefmt="fancy_grid")
 
 
-def run_itc_benchmark():
+def run_itc_benchmark(log_location):
     global tools
-    tools = [RVMatch(path)]
-    output_dicts = map(lambda x: x.run(log_location=os.path.expanduser("~/manual_results.txt")), tools)
+    tools = [FramaC(path, log_location)]
+    output_dicts = map(lambda x: x.run(), tools)
     names_list = map(lambda x: x.get_name(), tools)
     data_list = map(lambda x: crunch_data(x), output_dicts)
     tabulate_itc_criteria(names_list, data_list)
@@ -125,4 +136,4 @@ if __name__ == '__main__':
         if sys.argv[2] == "rv":
             run_rv_benchmark()
         if sys.argv[2] == "itc":
-            run_itc_benchmark()
+            run_itc_benchmark(sys.argv[3])

@@ -22,8 +22,6 @@ class Compcert(Tool):
             os.mkdir(temp_path)
 
         relevant_file_path = os.path.join(cur_path, file_prefix + ".c")
-        if not os.path.exists(relevant_file_path):
-            return []
         bootstrap_file_path = os.path.join(temp_path, file_prefix + "-temp.c")
         utils.external_info.bootstrap_file(relevant_file_path, bootstrap_file_path, vflag)
         return ["ccomp", "-interp", "-fbitfields", "-fstruct-passing",

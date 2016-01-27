@@ -7,6 +7,8 @@ import progressbar
 import signal
 import re
 from glob import glob
+from utils.logger import Logger
+
 class TimeoutException(Exception):
     pass
 
@@ -47,31 +49,30 @@ class FramaC(Tool):
             os.mkdir(temp_path)
 
         relevant_file_path = os.path.join(cur_path, file_prefix + ".c")
-        if not os.path.exists(relevant_file_path):
-            return []
         bootstrap_file_path = os.path.join(temp_path, file_prefix + "-temp.c")
         utils.external_info.bootstrap_file(relevant_file_path, bootstrap_file_path, vflag)
         return ["frama-c", "-val", "-cpp-extra-args=" + "-I " + header_file_path,
                 bootstrap_file_path]
 
-    def run(self, verbose=False, log_location=None):
+    def run(self):
         relevant_dirs = ["01.w_Defects", "02.wo_Defects"]
         output_dict = {}
-        log_file = None
-        if log_location is not None:
-            log_file = open(log_location, 'w+')
 
         for cur_dir in relevant_dirs:
             spec_dict = self.info.get_spec_dict()
             mapping_dict = self.info.get_file_mapping()
             for i in range(1, len(spec_dict.keys()) + 1):
+                if (i, -1) in self.info.get_ignore_list():
+                    continue
                 if i not in output_dict:
-                    output_dict[i] = {"count": spec_dict[i]["count"], "TP": 0, "FP": 0}
+                    output_dict[i] = {"count": spec_dict[i]["actual_count"], "TP": 0, "FP": 0}
                 file_prefix = mapping_dict[i]
                 print self.name + " being tested on folder " + cur_dir + " and file " + file_prefix
                 # bar = progressbar.ProgressBar(redirect_stdout=True)
                 framac_include_path = subprocess.check_output(["frama-c", "-print-path"])
                 for j in range(1, spec_dict[i]["count"]):
+                    if (i, j) in self.info.get_ignore_list():
+                        continue
                     vflag = str('%03d' % j)
                     try:
                         original_header_path = os.path.join(self.benchmark_path, "include")
@@ -88,27 +89,33 @@ class FramaC(Tool):
                             if verdict:
                                 if "w_Defects" in cur_dir:
                                     output_dict[i]["TP"] += 1
+                                    self.logger.log_output(output, file_prefix + ".c", cur_dir, str(j), "TP")
                                 else:
                                     output_dict[i]["FP"] += 1
+                                    self.logger.log_output(output, file_prefix + ".c", cur_dir, str(j), "FP")
 
                     except subprocess.CalledProcessError as e:
                         signal.alarm(0)
+                        self.logger.log_output(output, file_prefix + ".c", cur_dir, str(j), "FP")
                         #error with the plugin
                         continue
 
                     except TimeoutException:
+                        self.logger.log_output(output, file_prefix + ".c", cur_dir, str(j), "TO")
                         continue
                     finally:
+                        self.logger.log_output(output, file_prefix + ".c", cur_dir, str(j), "NEG")
                         signal.alarm(0)
         return output_dict
 
     def get_name(self):
         return self.name
 
-    def __init__(self, benchmark_path):
+    def __init__(self, benchmark_path, log_path):
         self.info = Info()
         self.benchmark_path = benchmark_path
         self.name = "framac"
+        self.logger = Logger(log_path, self.name)
 
     def analyze(self):
         Tool.analyze(self)
