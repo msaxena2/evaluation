@@ -61,11 +61,11 @@ class FramaC(Tool):
         for cur_dir in relevant_dirs:
             spec_dict = self.info.get_spec_dict()
             mapping_dict = self.info.get_file_mapping()
-            for i in range(1, len(spec_dict.keys()) + 1):
-                if (i, -1) in self.info.get_ignore_list():
-                    continue
+            for i in range(1, 3):#len(spec_dict.keys()) + 1):
                 if i not in output_dict:
                     output_dict[i] = {"count": spec_dict[i]["actual_count"], "TP": 0, "FP": 0}
+                if (i, -1) in self.info.get_ignore_list():
+                    continue
                 file_prefix = mapping_dict[i]
                 print self.name + " being tested on folder " + cur_dir + " and file " + file_prefix
                 # bar = progressbar.ProgressBar(redirect_stdout=True)
@@ -96,7 +96,7 @@ class FramaC(Tool):
 
                     except subprocess.CalledProcessError as e:
                         signal.alarm(0)
-                        self.logger.log_output(output, file_prefix + ".c", cur_dir, str(j), "FP")
+                        self.logger.log_output(output, file_prefix + ".c", cur_dir, str(j), "NEG")
                         #error with the plugin
                         continue
 
@@ -104,7 +104,8 @@ class FramaC(Tool):
                         self.logger.log_output(output, file_prefix + ".c", cur_dir, str(j), "TO")
                         continue
                     finally:
-                        self.logger.log_output(output, file_prefix + ".c", cur_dir, str(j), "NEG")
+                        if not verdict:
+                            self.logger.log_output(output, file_prefix + ".c", cur_dir, str(j), "NEG")
                         signal.alarm(0)
         return output_dict
 
@@ -122,3 +123,4 @@ class FramaC(Tool):
 
     def cleanup(self):
         Tool.cleanup(self)
+        self.logger.close_log()

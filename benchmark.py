@@ -86,7 +86,7 @@ def tabulate_itc_criteria(tool_list, crunched_data):
     header = [" "]
     for tool in tool_list:
         header.append(tool + " (DR)")
-        header.append(tool + "100 - (FPR)")
+        header.append(tool + " 100 - (FPR)")
         header.append(tool + " (P)")
 
     table = []
@@ -96,7 +96,7 @@ def tabulate_itc_criteria(tool_list, crunched_data):
         for i in range(0, len(tool_list)):
             dr = (float(crunched_data[i][error]["TP"]) / float(crunched_data[i][error]["count"])) * 100
             fpr = 100 - (float(crunched_data[i][error]["FP"]) / crunched_data[i][error]["count"] * 100)
-            prod = math.sqrt(dr * (100 - fpr))
+            prod = math.sqrt(dr * fpr)
             row = row + [dr, fpr, prod]
         table.append(row)
 
@@ -106,7 +106,7 @@ def tabulate_itc_criteria(tool_list, crunched_data):
     for column in range(1, len(table[0])):
         sum = 0
         for row in range(0, len(table)):
-            error = [row][0]
+            error = table[row][0]
             sum += float(table[row][column]) * (float(count_dict[error]) / test_total)
         if column % 3 == 0:
             prod = math.sqrt(average[-1] * average[-2])
@@ -126,7 +126,7 @@ def run_itc_benchmark(log_location):
     names_list = map(lambda x: x.get_name(), tools)
     data_list = map(lambda x: crunch_data(x), output_dicts)
     tabulate_itc_criteria(names_list, data_list)
-
+    map(lambda x : x.cleanup(), tools)
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
