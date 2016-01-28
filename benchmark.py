@@ -101,17 +101,17 @@ def tabulate_itc_criteria(tool_list, crunched_data):
             row = row + [dr, fpr, prod]
         table.append(row)
 
-    # for error in crunched_data[0].keys():
-    #     row = [error]
-    #     total_tp = 0
-    #     total_fp = 0
-    #     for i in range(0, len(tool_list)):
-    #         raw_tp = crunched_data[i][error]["TP"]
-    #         raw_fp = crunched_data[i][error]["FP"]
-    #         total_tp += raw_tp
-    #         total_fp += raw_fp
-    #         row = row + [raw_tp, raw_fp, crunched_data[i][error]["count"]]
-    #     raw_table.append(row)
+    for error in crunched_data[0].keys():
+        row = [error]
+        total_tp = 0
+        total_fp = 0
+        for i in range(0, len(tool_list)):
+            raw_tp = crunched_data[i][error]["TP"]
+            raw_fp = crunched_data[i][error]["FP"]
+            total_tp += raw_tp
+            total_fp += raw_fp
+            row = row + [raw_tp, raw_fp, crunched_data[i][error]["count"]]
+        raw_table.append(row)
 
     count_dict = info.get_count_dict()
     test_total = info.get_total()
@@ -134,7 +134,7 @@ def tabulate_itc_criteria(tool_list, crunched_data):
     print tabulate(table, headers=header, tablefmt="fancy_grid")
     print tabulate(table, headers=header, tablefmt="simple")
 
-
+    print tabulate(raw_table, headers=["Error", "True Positive Count", "False Positive Count", "Tests Run"])
 def run_itc_benchmark(log_location):
     global tools
     tools = [FramaC(path, log_location)]
