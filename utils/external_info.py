@@ -8,18 +8,23 @@ relevant_itc_dirs = ["01.w_defects", "02.wo_defects"]
 
 
 def bootstrap_file(file_path, temp_store_file_path, vflag):
+    headers = ["#include <stdio.h>", "#include <stdlib.h>", "#include <math.h>", "#include <string.h>", "#include <pthread.h>", "#include <ctype.h>", "#include <unistd.h>", "#include <limits.h>"]
     with open(temp_store_file_path, 'w+') as temp_file:
         count = 0
         main_begin = False
         with open(file_path, 'r') as cur_file:
             for line in cur_file:
+                if "HeaderFile.h" in line:
+                    temp_file.write("\n".join(headers))
+                    temp_file.write("extern int idx, sink;\n")
+                    temp_file.write("extern double dsink;\n")
+                    temp_file.write("extern void *psink;\n")
+                    continue
+
                 if "extern volatile int vflag" in line:
                     temp_file.write("int vflag = " + vflag + ";\n")
                     continue
                 if "_main" in line:
-                    temp_file.write("int idx, sink;\n")
-                    temp_file.write("double dsink;\n")
-                    temp_file.write("void * psipk;\n")
                     temp_file.write("int main () \n")
                     main_begin = True
                     continue

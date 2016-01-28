@@ -25,21 +25,16 @@ class Valgrind(Tool):
         relevant_file_path = os.path.join(cur_path, file_prefix + ".c")
         bootstrap_file_path = os.path.join(temp_path, file_prefix + "-temp.c")
         utils.external_info.bootstrap_file(relevant_file_path, bootstrap_file_path, vflag)
-        return ["gcc", "-Werror", "-Wpedantic", "-Wall", "-Wextra", "-Wno-unused", "-lm", "-I" + os.path.join(self.benchmark_path, "include"), "-o", os.path.join(temp_path, file_prefix + "-temp.out"), bootstrap_file_path]
+        return ["gcc", "-Werror", "-Wpedantic", "-Wall", "-Wextra", "-Wno-unused", "-lm", "-I" + os.path.join(self.benchmark_path, "include"), "-o", os.path.join(temp_path, file_prefix + "-temp.out"), bootstrap_file_path, os.path.join(self.benchmark_path, "extern.c")]
 
 
-    def get_run_command(self, file_prefix, temp_dir_name):
+    def get_run_command(self, cur_dir, file_prefix, temp_dir_name):
         relevant_file_path = os.path.join(self.benchmark_path, temp_dir_name, file_prefix + "-temp.out")
         if os.path.exists(relevant_file_path):
             return ["valgrind", "--exit-errorcode=10", relevant_file_path]
         return []
 
-    def analyze_output(self, output):
-        print "Checking output " + output
-        error_regex = re.compile('(UB|CV|IMPL|L|USP)\-([A-Z]+[0-9]*)')
-        if re.search(error_regex, output):
-            return True
-        return False
+
 
     def run(self, verbose=False, log_location=None):
         output_dict = {}
@@ -61,14 +56,14 @@ class Valgrind(Tool):
                     if (i, j) in ignore_list:
                         continue
                     vflag = str('%03d' % j)
-                    gcc_command = self.get_gcc_command(cur_dir, file_prefix, "rv_match-temp", vflag)
+                    gcc_command = self.get_gcc_command(cur_dir, file_prefix, "valgrind_temp", vflag)
                     result = "NEG"
                     print " ".join(gcc_command)
                     try:
                         signal.signal(signal.SIGALRM, self.signal_handler)
                         signal.alarm(120)
                         output = subprocess.check_output(gcc_command, stderr=subprocess.STDOUT)
-                        valgrind = self.get_run_command()
+                        valgrind = self.get_run_command(cur_dir, file_prefix, "valgrind_temp")
                         output = subprocess.check_output(valgrind, stderr=subprocess.STDOUT)
 
                     except subprocess.CalledProcessError as e:
