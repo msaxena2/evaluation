@@ -90,6 +90,7 @@ def tabulate_itc_criteria(tool_list, crunched_data):
         header.append(tool + " (P)")
 
     table = []
+    raw_table = []
     for error in crunched_data[0].keys():
         row = []
         row.append(error)
@@ -99,6 +100,18 @@ def tabulate_itc_criteria(tool_list, crunched_data):
             prod = math.sqrt(dr * fpr)
             row = row + [dr, fpr, prod]
         table.append(row)
+
+    # for error in crunched_data[0].keys():
+    #     row = [error]
+    #     total_tp = 0
+    #     total_fp = 0
+    #     for i in range(0, len(tool_list)):
+    #         raw_tp = crunched_data[i][error]["TP"]
+    #         raw_fp = crunched_data[i][error]["FP"]
+    #         total_tp += raw_tp
+    #         total_fp += raw_fp
+    #         row = row + [raw_tp, raw_fp, crunched_data[i][error]["count"]]
+    #     raw_table.append(row)
 
     count_dict = info.get_count_dict()
     test_total = info.get_total()
@@ -119,6 +132,7 @@ def tabulate_itc_criteria(tool_list, crunched_data):
 
     table.append(average)
     print tabulate(table, headers=header, tablefmt="fancy_grid")
+    print tabulate(table, headers=header, tablefmt="simple")
 
 
 def run_itc_benchmark(log_location):
