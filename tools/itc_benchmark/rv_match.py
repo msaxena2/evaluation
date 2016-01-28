@@ -28,8 +28,9 @@ class RVMatch(Tool):
         return ["kcc", "-flint", "-lm", "-I" + os.path.join(self.benchmark_path, "include"), "-o", os.path.join(temp_path, file_prefix + "-temp.out"), bootstrap_file_path]
 
 
-    def get_run_command(self, file_prefix, temp_dir_name):
-        relevant_file_path = os.path.join(self.benchmark_path, temp_dir_name, file_prefix + "-temp.out")
+    def get_run_command(self, cur_dir, file_prefix, temp_dir_name):
+        relevant_file_path = os.path.join(self.benchmark_path, cur_dir, temp_dir_name, file_prefix + "-temp.out")
+        print relevant_file_path
         if os.path.exists(relevant_file_path):
             return [relevant_file_path]
         return []
@@ -72,8 +73,8 @@ class RVMatch(Tool):
                         if self.analyze_output(output):
                             result = "POS"
                         else:
-                            run_command = self.get_run_command(file_prefix, "rv_match-temp")
-                            print " ".join(run_command)
+                            run_command = self.get_run_command(cur_dir, file_prefix, "rv_match-temp")
+                            print "Launching Executable " + " ".join(run_command)
                             if len(run_command) > 0:
                                 output = subprocess.check_output(run_command, stderr=subprocess.STDOUT)
                                 if self.analyze_output(output):

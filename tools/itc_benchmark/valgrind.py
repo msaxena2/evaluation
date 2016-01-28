@@ -103,7 +103,7 @@ class Valgrind(Tool):
         os.chdir(os.path.expanduser(benchmark_path))
         self.info = Info()
         self.benchmark_path = benchmark_path
-        self.name = "RV-Match"
+        self.name = "GCC+Valgrind"
         self.logger = Logger(log_file_path, self.name)
 
     def analyze(self):
