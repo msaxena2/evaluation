@@ -4,6 +4,9 @@ import subprocess
 from tools.rv_benchmark.tool import Tool
 from utils.external_info import Info
 import signal
+from utils.logger import Logger
+import re
+import utils
 
 class TimeoutException(Exception):
     pass
@@ -13,60 +16,99 @@ class RVMatch(Tool):
     def signal_handler(self, signum, frame):
         raise TimeoutException("Timed out!")
 
+    def get_kcc_command(self, cur_dir, file_prefix, temp_dir_name, vflag):
+        cur_path = os.path.join(self.benchmark_path, cur_dir)
+        temp_path = os.path.join(cur_path, temp_dir_name)
+        if not os.path.exists(temp_path):
+            os.mkdir(temp_path)
+
+        relevant_file_path = os.path.join(cur_path, file_prefix + ".c")
+        bootstrap_file_path = os.path.join(temp_path, file_prefix + "-temp.c")
+        utils.external_info.bootstrap_file(relevant_file_path, bootstrap_file_path, vflag)
+        return ["kcc", "-I" + os.path.join(self.benchmark_path, "include"), "-o", os.path.join(temp_path, file_prefix, "-temp.out"), bootstrap_file_path]
+
+
+    def get_run_command(self, file_prefix, temp_dir_name):
+        relevant_file_path = os.path.join(self.benchmark_path, temp_dir_name, file_prefix + "-temp.out")
+        if os.path.exists(relevant_file_path):
+            return ["./", relevant_file_path]
+        return []
+
+    def analyze_output(self, output):
+        error_regex = re.compile('(UB|CV|IMPL)\-([A-Z]+[0-9]*)')
+        if re.search(error_regex, output):
+            return True
+        return False
+
     def run(self, verbose=False, log_location=None):
         output_dict = {}
         spec_dict = self.info.get_spec_dict()
+        ignore_list = self.info.get_ignore_list()
         os.chdir(self.benchmark_path)
-        for i in range(1, len(spec_dict.keys()) + 1):
-            if i not in output_dict:
-                output_dict[i] = {"count": spec_dict[i]["count"], "TP": 0, "FP": 0}
-            print self.name + " being tested on file " + str(i)
-            #bar = progressbar.ProgressBar()
-            for j in range(1, spec_dict[i]["count"]):
-                arg = [str('%03d' % i) + str('%03d' % j)]
-                try:
-                    signal.signal(signal.SIGALRM, self.signal_handler)
-                    signal.alarm(10)
-                    output_w = subprocess.check_output(["./01.w_Defects/01_w_Defects"] + arg)#, stderr=subprocess.STDOUT)
-                except subprocess.CalledProcessError:
-                    output_dict[i]["TP"] += 1
-                except TimeoutException:
-                    pass
-                try:
-                    signal.alarm(10)
-                    output_wo = subprocess.check_output(["./02.wo_Defects/02_wo_Defects"] + arg)#, stderr=subprocess.STDOUT)
-                except subprocess.CalledProcessError:
-                    output_dict[i]["FP"] += 1
-                except TimeoutException:
+        mapping_dict = self.info.get_file_mapping()
+        relevant_dirs = ["01.w_Defects", "02.wo_Defects"]
+        for cur_dir in relevant_dirs:
+            for i in range(1, len(spec_dict.keys()) + 1):
+                if i not in output_dict:
+                    output_dict[i] = {"count": spec_dict[i]["actual_count"], "TP": 0, "FP": 0}
+                if (i -1) in ignore_list:
                     continue
-                finally:
-                    #reset the alarm
-                    signal.alarm(0)
-                if verbose:
-                    whole_path = os.path.expanduser(log_location)
-                    mode = 'a'
-                    if not os.path.exists(whole_path) or (i == 1 and j == 0):
-                        mode = 'w+'
-                    with open(whole_path, mode) as output_file:
-                        output_file.write(output_w)
-                        output_file.write(output_wo)
+                file_prefix = mapping_dict[i]
+                print self.name + " being tested on file " + str(i)
+                #bar = progressbar.ProgressBar()
+                for j in range(1, spec_dict[i]["count"]):
+                    if (i, j) in ignore_list:
+                        continue
+                    vflag = str('%03d' % j)
+                    kcc_command = self.get_kcc_command(cur_dir, file_prefix, "rv_match-temp", vflag)
+                    result = "NEG"
+                    output = ""
+                    try:
+                        output = subprocess.check_output(kcc_command, stderr=subprocess.STDOUT)
+                        if self.analyze_output(output):
+                            result = "POS"
+                        else:
+                            run_command = self.get_run_command(file_prefix, "rv_match-temp")
+                            if len(run_command) > 0:
+                                output = subprocess.check_output(run_command, stderr=subprocess.STDOUT)
+                                if self.analyze_output(output):
+                                    result = "POS"
+
+                    except subprocess.CalledProcessError as e:
+                        output = e.output
+                        if self.analyze_output(e.output):
+                            result = "POS"
+
+                    except TimeoutException:
+                        result = "TO"
+
+                    finally:
+                        if result == "POS":
+                            if "w_Defects" in cur_dir:
+                                output_dict[i]["TP"] += 1
+                                self.logger.log_output(self, output, cur_dir, j, "TP")
+                            else:
+                                output_dict[i]["FP"] += 1
+                                self.logger.log_output(self, output, cur_dir, j, "FP")
+
+
+
         return output_dict
 
     def get_name(self):
         return self.name
 
 
-    def __init__(self, benchmark_path):
+    def __init__(self, benchmark_path, log_file_path):
         os.chdir(os.path.expanduser(benchmark_path))
-        subprocess.check_call(["./bootstrap"])
-        subprocess.check_call(["./configure", "CC=kcc", "CFLAGS=-flint", "ld=kcc"])
-        subprocess.check_call(["make -j4"])
         self.info = Info()
         self.benchmark_path = benchmark_path
         self.name = "RV-Match"
+        self.logger = Logger(log_file_path)
 
     def analyze(self):
         Tool.analyze(self)
 
     def cleanup(self):
         Tool.cleanup(self)
+        self.logger.close_log()

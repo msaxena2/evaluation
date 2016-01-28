@@ -28,7 +28,7 @@ class Compcert(Tool):
         return ["ccomp", "-interp", "-fbitfields", "-fstruct-passing",
                 "-I" + os.path.join(self.benchmark_path, "include"),
                 bootstrap_file_path]
-        
+
     def run(self):
         relevant_dirs = ["01.w_Defects", "02.wo_Defects"]
         output_dict = {}
@@ -44,7 +44,7 @@ class Compcert(Tool):
                 file_prefix = mapping_dict[i]
                 print self.name + " being tested on folder " + cur_dir + " and file " + file_prefix + ".c"
                 # bar = progressbar.ProgressBar(redirect_stdout=True)
-                for j in range(1, 3):# spec_dict[i]["count"]):
+                for j in range(1, spec_dict[i]["count"]):
                     if (i, j) in ignore_list:
                         continue
                     vflag = str('%03d' % j)
