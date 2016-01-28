@@ -25,7 +25,7 @@ class RVMatch(Tool):
         relevant_file_path = os.path.join(cur_path, file_prefix + ".c")
         bootstrap_file_path = os.path.join(temp_path, file_prefix + "-temp.c")
         utils.external_info.bootstrap_file(relevant_file_path, bootstrap_file_path, vflag)
-        return ["kcc", "-flint", "-lm", "-I" + os.path.join(self.benchmark_path, "include"), "-o", os.path.join(temp_path, file_prefix + "-temp.out"), bootstrap_file_path]
+        return ["kcc", "-flint", "-lm", "-I" + os.path.join(self.benchmark_path, "include"), "-o", os.path.join(temp_path, file_prefix + "-temp.out"), bootstrap_file_path, os.path.join(self.benchmark_path, "extern.c")]
 
 
     def get_run_command(self, cur_dir, file_prefix, temp_dir_name):

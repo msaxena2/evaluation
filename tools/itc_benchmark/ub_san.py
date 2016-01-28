@@ -25,7 +25,7 @@ class UBSan(Tool):
         relevant_file_path = os.path.join(cur_path, file_prefix + ".c")
         bootstrap_file_path = os.path.join(temp_path, file_prefix + "-temp.c")
         utils.external_info.bootstrap_file(relevant_file_path, bootstrap_file_path, vflag)
-        return ["clang", "-fsanitize=undefined", "-Werror", "-Wpedantic", "-Wall", "-Wextra", "-Wno-unused", "-lm", "-o", os.path.join(temp_path, file_prefix + "-temp.out"), bootstrap_file_path, os.path.join(self.benchmark_path, "extern.c")]
+        return ["clang-3.5", "-fsanitize=undefined", "-Werror", "-Wpedantic", "-Wextra", "-Wno-unused", "-lm", "-o", os.path.join(temp_path, file_prefix + "-temp.out"), bootstrap_file_path, os.path.join(self.benchmark_path, "extern.c")]
 
 
     def get_run_command(self, cur_dir, file_prefix, temp_dir_name):
@@ -60,6 +60,7 @@ class UBSan(Tool):
                     result = "NEG"
                     print " ".join(gcc_command)
                     try:
+                        output=""
                         signal.signal(signal.SIGALRM, self.signal_handler)
                         signal.alarm(120)
                         output = subprocess.check_output(gcc_command, stderr=subprocess.STDOUT)

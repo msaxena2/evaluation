@@ -16,6 +16,7 @@ def bootstrap_file(file_path, temp_store_file_path, vflag):
             for line in cur_file:
                 if "HeaderFile.h" in line:
                     temp_file.write("\n".join(headers))
+                    temp_file.write("\n")
                     temp_file.write("extern int idx, sink;\n")
                     temp_file.write("extern double dsink;\n")
                     temp_file.write("extern void *psink;\n")

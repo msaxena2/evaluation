@@ -137,7 +137,7 @@ def tabulate_itc_criteria(tool_list, crunched_data):
     print tabulate(raw_table, headers=["Error", "True Positive Count", "False Positive Count", "Tests Run"])
 def run_itc_benchmark(log_location):
     global tools
-    tools = [RVMatch(path, log_location)]
+    tools = [UBSan(path, log_location)]
     output_dicts = map(lambda x: x.run(), tools)
     names_list = map(lambda x: x.get_name(), tools)
     data_list = map(lambda x: crunch_data(x), output_dicts)
