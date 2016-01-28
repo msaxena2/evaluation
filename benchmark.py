@@ -104,15 +104,17 @@ def tabulate_itc_criteria(tool_list, crunched_data):
     test_total = info.get_total()
     average = ["Average"]
     for column in range(1, len(table[0])):
+        if column % 3 == 0:
+            prod = math.sqrt(average[-1] * average[-2])
+            average.append(prod)
+            continue
         sum = 0
         for row in range(0, len(table)):
             error = table[row][0]
             sum += float(table[row][column]) * (float(count_dict[error]) / test_total)
-        if column % 3 == 0:
-            prod = math.sqrt(average[-1] * average[-2])
-            average.append(prod)
+
         else:
-            average.append(sum / len(table))
+            average.append(sum)
 
 
     table.append(average)
