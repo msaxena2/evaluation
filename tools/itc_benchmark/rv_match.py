@@ -25,17 +25,18 @@ class RVMatch(Tool):
         relevant_file_path = os.path.join(cur_path, file_prefix + ".c")
         bootstrap_file_path = os.path.join(temp_path, file_prefix + "-temp.c")
         utils.external_info.bootstrap_file(relevant_file_path, bootstrap_file_path, vflag)
-        return ["kcc", "-I" + os.path.join(self.benchmark_path, "include"), "-o", os.path.join(temp_path, file_prefix, "-temp.out"), bootstrap_file_path]
+        return ["kcc", "-flint", "-lm", "-I" + os.path.join(self.benchmark_path, "include"), "-o", os.path.join(temp_path, file_prefix + "-temp.out"), bootstrap_file_path]
 
 
     def get_run_command(self, file_prefix, temp_dir_name):
         relevant_file_path = os.path.join(self.benchmark_path, temp_dir_name, file_prefix + "-temp.out")
         if os.path.exists(relevant_file_path):
-            return ["./", relevant_file_path]
+            return [relevant_file_path]
         return []
 
     def analyze_output(self, output):
-        error_regex = re.compile('(UB|CV|IMPL)\-([A-Z]+[0-9]*)')
+        print "Checking output " + output
+        error_regex = re.compile('(UB|CV|IMPL|L|USP)\-([A-Z]+[0-9]*)')
         if re.search(error_regex, output):
             return True
         return False
@@ -51,7 +52,7 @@ class RVMatch(Tool):
             for i in range(1, len(spec_dict.keys()) + 1):
                 if i not in output_dict:
                     output_dict[i] = {"count": spec_dict[i]["actual_count"], "TP": 0, "FP": 0}
-                if (i -1) in ignore_list:
+                if (i, -1) in ignore_list:
                     continue
                 file_prefix = mapping_dict[i]
                 print self.name + " being tested on file " + str(i)
@@ -61,14 +62,18 @@ class RVMatch(Tool):
                         continue
                     vflag = str('%03d' % j)
                     kcc_command = self.get_kcc_command(cur_dir, file_prefix, "rv_match-temp", vflag)
+                    print " ".join(kcc_command)
                     result = "NEG"
                     output = ""
                     try:
+                        signal.signal(signal.SIGALRM, self.signal_handler)
+                        signal.alarm(120)
                         output = subprocess.check_output(kcc_command, stderr=subprocess.STDOUT)
                         if self.analyze_output(output):
                             result = "POS"
                         else:
                             run_command = self.get_run_command(file_prefix, "rv_match-temp")
+                            print " ".join(run_command)
                             if len(run_command) > 0:
                                 output = subprocess.check_output(run_command, stderr=subprocess.STDOUT)
                                 if self.analyze_output(output):
@@ -83,13 +88,18 @@ class RVMatch(Tool):
                         result = "TO"
 
                     finally:
+                        signal.alarm(0)
                         if result == "POS":
                             if "w_Defects" in cur_dir:
                                 output_dict[i]["TP"] += 1
-                                self.logger.log_output(self, output, cur_dir, j, "TP")
+                                self.logger.log_output(output, file_prefix + ".c", cur_dir, j, "TP")
                             else:
                                 output_dict[i]["FP"] += 1
-                                self.logger.log_output(self, output, cur_dir, j, "FP")
+                                self.logger.log_output(output, file_prefix + ".c", cur_dir, j, "FP")
+                        elif result == "TO":
+                            self.logger.log_output(output, file_prefix + ".c", cur_dir, j, "TO")
+                        else:
+                            self.logger.log_output(output, file_prefix + ".c", cur_dir, j, "NEG")
 
 
 
@@ -104,7 +114,7 @@ class RVMatch(Tool):
         self.info = Info()
         self.benchmark_path = benchmark_path
         self.name = "RV-Match"
-        self.logger = Logger(log_file_path)
+        self.logger = Logger(log_file_path, self.name)
 
     def analyze(self):
         Tool.analyze(self)
