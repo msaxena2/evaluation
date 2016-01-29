@@ -18,6 +18,7 @@ class FramaC(Tool):
         raise TimeoutException("Timed out!")
 
     def analyze_output(self, output, file_name):
+        print output
         for line in output.split('\n'):
             if file_name in line and "WARNING" in line.upper():
                 if "Neither code nor specification" in line:
@@ -70,6 +71,8 @@ class FramaC(Tool):
                 print self.name + " being tested on folder " + cur_dir + " and file " + file_prefix
                 # bar = progressbar.ProgressBar(redirect_stdout=True)
                 framac_include_path = subprocess.check_output(["frama-c", "-print-path"])
+                verdict = False
+                output = ""
                 for j in range(1, spec_dict[i]["count"]):
                     if (i, j) in self.info.get_ignore_list():
                         continue

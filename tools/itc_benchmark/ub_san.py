@@ -1,5 +1,5 @@
 import os
-import subprocess
+import subprocess32 as subprocess
 
 from tools.rv_benchmark.tool import Tool
 from utils.external_info import Info
@@ -16,25 +16,11 @@ class UBSan(Tool):
     def signal_handler(self, signum, frame):
         raise TimeoutException("Timed out!")
 
-    def get_clang_command(self, cur_dir, file_prefix, temp_dir_name, vflag):
-        cur_path = os.path.join(self.benchmark_path, cur_dir)
-        temp_path = os.path.join(cur_path, temp_dir_name)
-        if not os.path.exists(temp_path):
-            os.mkdir(temp_path)
 
-        relevant_file_path = os.path.join(cur_path, file_prefix + ".c")
-        bootstrap_file_path = os.path.join(temp_path, file_prefix + "-temp.c")
-        utils.external_info.bootstrap_file(relevant_file_path, bootstrap_file_path, vflag)
-        return ["clang-3.5", "-fsanitize=undefined", "-Werror", "-Wpedantic", "-Wextra", "-Wno-unused", "-lm", "-o", os.path.join(temp_path, file_prefix + "-temp.out"), bootstrap_file_path, os.path.join(self.benchmark_path, "extern.c")]
-
-
-    def get_run_command(self, cur_dir, file_prefix, temp_dir_name):
-        relevant_file_path = os.path.join(self.benchmark_path, temp_dir_name, file_prefix + "-temp.out")
-        if os.path.exists(relevant_file_path):
-            return [relevant_file_path]
-        return []
-
-
+    def check_output(self, output):
+        if "ThreadSanitizer: reported" in output:
+            return True
+        return False
 
     def run(self, verbose=False, log_location=None):
         output_dict = {}
@@ -51,29 +37,31 @@ class UBSan(Tool):
                     continue
                 file_prefix = mapping_dict[i]
                 print self.name + " being tested on file " + str(i)
+                executable_name = cur_dir.split('.')[0] + "_" + cur_dir.split('.')[-1]
                 #bar = progressbar.ProgressBar()
                 for j in range(1, spec_dict[i]["count"]):
                     if (i, j) in ignore_list:
                         continue
-                    vflag = str('%03d' % j)
-                    gcc_command = self.get_clang_command(cur_dir, file_prefix, "ubsan_temp", vflag)
+                    arg = str('%03d' % i) + str('%03d' % j)
+                    kcc_command = [os.path.join(self.benchmark_path, cur_dir, executable_name), arg]
+                    print kcc_command
                     result = "NEG"
-                    print " ".join(gcc_command)
+                    output = ""
                     try:
-                        output=""
-                        signal.signal(signal.SIGALRM, self.signal_handler)
-                        signal.alarm(120)
-                        output = subprocess.check_output(gcc_command, stderr=subprocess.STDOUT)
-                        valgrind = self.get_run_command(cur_dir, file_prefix, "ubsan_temp")
-                        output = subprocess.check_output(valgrind, stderr=subprocess.STDOUT)
+                        #output = subprocess.check_output(kcc_command, stderr=subprocess.STDOUT, timeout=4)
+                        process = subprocess.Popen(kcc_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                        process.wait(timeout=4)
+                        output = process.stdout.read() + process.stderr.read()
+                        print output
+                        if self.check_output(output):
+                            result = "POS"
 
-                    except subprocess.CalledProcessError as e:
-                        result = "POS"
 
-                    except TimeoutException:
+                    except subprocess.TimeoutExpired as e:
                         result = "TO"
 
                     finally:
+                        process.kill()
                         signal.alarm(0)
                         if result == "POS":
                             if "w_Defects" in cur_dir:
@@ -97,9 +85,15 @@ class UBSan(Tool):
 
     def __init__(self, benchmark_path, log_file_path):
         os.chdir(os.path.expanduser(benchmark_path))
+
+        # subprocess.check_call(["./bootstrap"])
+        # subprocess.check_call(["./configure", "CC=clang", "LD=clang", "CFLAGS=-flint"])
+        # compile_output = subprocess.check_call(["make", "-j4"], stderr=subprocess.STDOUT)
+
+
         self.info = Info()
         self.benchmark_path = benchmark_path
-        self.name = "UBSan"
+        self.name = "TSan"
         self.logger = Logger(log_file_path, self.name)
 
     def analyze(self):

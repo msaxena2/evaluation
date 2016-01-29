@@ -57,18 +57,19 @@ class RVMatch(Tool):
                     continue
                 file_prefix = mapping_dict[i]
                 print self.name + " being tested on file " + str(i)
+                executable_name = cur_dir.split('.')[0] + "_" + cur_dir.split('.')[-1]
                 #bar = progressbar.ProgressBar()
                 for j in range(1, spec_dict[i]["count"]):
                     if (i, j) in ignore_list:
                         continue
-                    arg = [str('%03d' % i) + str('%03d' % j)]
-                    kcc_command = [os.path.join(self.benchmark_path, cur_dir, cur_dir), arg]
-                    print " ".join(kcc_command)
+                    arg = str('%03d' % i) + str('%03d' % j)
+                    kcc_command = [os.path.join(self.benchmark_path, cur_dir, executable_name), arg]
+                    print kcc_command
                     result = "NEG"
                     output = ""
                     try:
                         signal.signal(signal.SIGALRM, self.signal_handler)
-                        signal.alarm(120)
+                        signal.alarm(12)
                         output = subprocess.check_output(kcc_command, stderr=subprocess.STDOUT)
                         if self.analyze_output(output):
                             result = "POS"
@@ -105,12 +106,11 @@ class RVMatch(Tool):
 
     def __init__(self, benchmark_path, log_file_path):
         os.chdir(os.path.expanduser(benchmark_path))
-        subprocess.check_call(["./bootstrap"])
-        subprocess.check_call(["./configure", "CC=kcc", "LD=kcc", "CFLAGS=-flint"])
-        compile_output = subprocess.check_call(["make", "-j4"], stderr=subprocess.STDOUT)
-        with open(os.path.expanduser("~/make_output.txt", 'w+')) as f:
-            f.write(compile_output)
-            f.close()
+
+        #subprocess.check_call(["./bootstrap"])
+        #subprocess.check_call(["./configure", "CC=kcc", "LD=kcc", "CFLAGS=-flint"])
+        #compile_output = subprocess.check_call(["make", "-j4"], stderr=subprocess.STDOUT)
+
 
         self.info = Info()
         self.benchmark_path = benchmark_path
