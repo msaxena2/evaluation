@@ -3,12 +3,18 @@ import os
 from tempfile import mkstemp
 from shutil import move
 from os import remove, close
+import re
 
-relevant_itc_dirs = ["01.w_defects", "02.wo_defects"]
+relevant_itc_dirs = ["02.w_defects", "01.wo_defects"]
 
+sanitize = ["stdlib.h", "stdio.h", "math.h", "string.h", "ctype.h", "unistd.h", "limits.h"]
 
-def bootstrap_file(file_path, temp_store_file_path, vflag):
+def bootstrap_file(file_path, temp_store_file_path, vflag, mode="NSH"):
     headers = ["#include <stdio.h>", "#include <stdlib.h>", "#include <math.h>", "#include <string.h>", "#include <pthread.h>", "#include <ctype.h>", "#include <unistd.h>", "#include <limits.h>"]
+    if mode == "SH":
+        sanpat = re.compile('.*<(.*)>')
+        headers = filter(lambda x : re.match(sanpat, x).group(1) in sanitize, headers)
+    print headers
     with open(temp_store_file_path, 'w+') as temp_file:
         count = 0
         main_begin = False

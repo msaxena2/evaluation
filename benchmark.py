@@ -9,6 +9,7 @@ from tools.itc_benchmark.comcert import Compcert
 from tools.itc_benchmark.ub_san import UBSan
 from tools.itc_benchmark.rv_match import RVMatch
 from tools.itc_benchmark.frama_c import FramaC
+from tools.itc_benchmark.tis import TIS
 import math
 import os
 from tabulate import tabulate
@@ -137,7 +138,7 @@ def tabulate_itc_criteria(tool_list, crunched_data):
     print tabulate(raw_table, headers=["Error", "True Positive Count", "False Positive Count", "Tests Run"])
 def run_itc_benchmark(log_location):
     global tools
-    tools = [FramaC(path, log_location)]
+    tools = [TIS(path, log_location)]
     output_dicts = map(lambda x: x.run(), tools)
     names_list = map(lambda x: x.get_name(), tools)
     data_list = map(lambda x: crunch_data(x), output_dicts)

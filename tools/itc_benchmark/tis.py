@@ -13,37 +13,17 @@ class TimeoutException(Exception):
     pass
 
 
-class FramaC(Tool):
+class TIS(Tool):
     def signal_handler(self, signum, frame):
         raise TimeoutException("Timed out!")
 
     def analyze_output(self, output, file_name):
-        print output
-        for line in output.split('\n'):
-            if file_name in line and "WARNING" in line.upper():
-                if "Neither code nor specification" in line:
-                    continue
-                # Simple condition for an alarm in the file
-                return True
-        return False
+        return "ERROR" in output.upper()
 
 
-    def sanitize_header_file(self, original_header_path, new_header_path, framac_include_path, header_file_name):
-        allowed_list = map(lambda z : z.split('/')[-1], [y for x in os.walk(framac_include_path) for y in glob(os.path.join(x[0], '*.h'))])
-        pattern = re.compile('#include\ *<(.*)>')
-        if not os.path.exists(new_header_path):
-            os.mkdir(new_header_path)
-        with open(os.path.join(new_header_path, header_file_name), 'w+') as temp_file:
-            with open(os.path.join(original_header_path, header_file_name), 'r') as cur_file:
-                for line in cur_file:
-                    match = re.match(pattern, line)
-                    if match:
-                        if match.group(1) not in allowed_list:
-                            continue
-                    temp_file.write(line)
 
 
-    def get_framac_command(self, cur_dir, file_prefix, temp_dir_name, vflag):
+    def get_tis_command(self, cur_dir, file_prefix, temp_dir_name, vflag, header_file_path):
         cur_path = os.path.join(self.benchmark_path, cur_dir)
         temp_path = os.path.join(cur_path, temp_dir_name)
         if not os.path.exists(temp_path):
@@ -51,8 +31,8 @@ class FramaC(Tool):
 
         relevant_file_path = os.path.join(cur_path, file_prefix + ".c")
         bootstrap_file_path = os.path.join(temp_path, file_prefix + "-temp.c")
-        utils.external_info.bootstrap_file(relevant_file_path, bootstrap_file_path, vflag)
-        return ["frama-c", "-val", bootstrap_file_path]
+        utils.external_info.bootstrap_file(relevant_file_path, bootstrap_file_path, vflag, "SH")
+        return ["tis", bootstrap_file_path]
 
     def run(self):
         relevant_dirs = ["01.w_Defects", "02.wo_Defects"]
@@ -76,30 +56,34 @@ class FramaC(Tool):
                         continue
                     vflag = str('%03d' % j)
                     try:
-                        framac_command = self.get_framac_command(cur_dir, file_prefix, "framac_dir", vflag)
-                        print " ".join(framac_command)
-                        if len(framac_command) != 0:
+                        original_header_path = os.path.join(self.benchmark_path, "include")
+                        new_header_path =  os.path.join(original_header_path, "tis_temp")
+                        tis_command = self.get_tis_command(cur_dir, file_prefix, "tis_dir", vflag, new_header_path)
+                        print " ".join(tis_command)
+                        if len(tis_command) != 0:
                             signal.signal(signal.SIGALRM, self.signal_handler)
                             #signal.alarm(10)
-                            output = subprocess.check_output(framac_command, stderr=subprocess.STDOUT)
+                            output = subprocess.check_output(tis_command, stderr=subprocess.STDOUT)
                             print output
                             verdict = self.analyze_output(output, file_prefix)
                             if verdict:
                                 if "w_Defects" in cur_dir:
                                     output_dict[i]["TP"] += 1
+                                    self.logger.log_output(output, file_prefix + ".c", cur_dir, str(j), "TP")
                                 else:
                                     output_dict[i]["FP"] += 1
+                                    self.logger.log_output(output, file_prefix + ".c", cur_dir, str(j), "FP")
 
                     except subprocess.CalledProcessError as e:
                         signal.alarm(0)
+                        self.logger.log_output(output, file_prefix + ".c", cur_dir, str(j), "NEG")
                         #error with the plugin
                         continue
 
                     except TimeoutException:
+                        self.logger.log_output(output, file_prefix + ".c", cur_dir, str(j), "TO")
                         continue
                     finally:
-                        if verdict:
-                            self.logger.log_output(output, file_prefix + ".c", cur_dir, str(j), "TP")
                         if not verdict:
                             self.logger.log_output(output, file_prefix + ".c", cur_dir, str(j), "NEG")
                         signal.alarm(0)
@@ -111,7 +95,7 @@ class FramaC(Tool):
     def __init__(self, benchmark_path, log_path):
         self.info = Info()
         self.benchmark_path = benchmark_path
-        self.name = "framac"
+        self.name = "TIS"
         self.logger = Logger(log_path, self.name)
 
     def analyze(self):
