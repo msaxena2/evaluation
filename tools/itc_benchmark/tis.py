@@ -1,5 +1,5 @@
 import os
-import subprocess
+import subprocess32 as subprocess
 import utils.external_info
 from tools.rv_benchmark.tool import Tool
 from utils.external_info import Info
@@ -57,14 +57,14 @@ class TIS(Tool):
                     vflag = str('%03d' % j)
                     try:
                         original_header_path = os.path.join(self.benchmark_path, "include")
-                        new_header_path =  os.path.join(original_header_path, "tis_temp")
+                        new_header_path = os.path.join(original_header_path, "tis_temp")
                         tis_command = self.get_tis_command(cur_dir, file_prefix, "tis_dir", vflag, new_header_path)
                         print " ".join(tis_command)
                         if len(tis_command) != 0:
                             signal.signal(signal.SIGALRM, self.signal_handler)
-                            #signal.alarm(10)
-                            output = subprocess.check_output(tis_command, stderr=subprocess.STDOUT)
-                            print output
+                            process = subprocess.Popen(tis_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                            process.wait(timeout=10)
+                            output += process.stdout.read() + process.stderr.read()
                             verdict = self.analyze_output(output, file_prefix)
                             if verdict:
                                 if "w_Defects" in cur_dir:
@@ -75,18 +75,18 @@ class TIS(Tool):
                                     self.logger.log_output(output, file_prefix + ".c", cur_dir, str(j), "FP")
 
                     except subprocess.CalledProcessError as e:
-                        signal.alarm(0)
                         self.logger.log_output(output, file_prefix + ".c", cur_dir, str(j), "NEG")
                         #error with the plugin
                         continue
 
-                    except TimeoutException:
-                        self.logger.log_output(output, file_prefix + ".c", cur_dir, str(j), "TO")
+                    except subprocess.TimeoutExpired:
                         continue
+
                     finally:
+                        process.kill()
                         if not verdict:
                             self.logger.log_output(output, file_prefix + ".c", cur_dir, str(j), "NEG")
-                        signal.alarm(0)
+
         return output_dict
 
     def get_name(self):

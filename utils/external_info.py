@@ -14,7 +14,7 @@ def bootstrap_file(file_path, temp_store_file_path, vflag, mode="NSH"):
     if mode == "SH":
         sanpat = re.compile('.*<(.*)>')
         headers = filter(lambda x : re.match(sanpat, x).group(1) in sanitize, headers)
-    print headers
+
     with open(temp_store_file_path, 'w+') as temp_file:
         count = 0
         main_begin = False
