@@ -18,7 +18,7 @@ class TIS(Tool):
         raise TimeoutException("Timed out!")
 
     def analyze_output(self, output, file_name):
-        return "ERROR" in output.upper()
+        return "DEGENERATION OCCURRED" in output.upper()
 
 
 
@@ -77,11 +77,10 @@ class TIS(Tool):
                     except subprocess.CalledProcessError as e:
                         self.logger.log_output(output, file_prefix + ".c", cur_dir, str(j), "NEG")
                         #error with the plugin
-                        continue
 
                     except subprocess.TimeoutExpired:
-                        continue
-
+			pass
+				
                     finally:
                         process.kill()
                         if not verdict:

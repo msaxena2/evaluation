@@ -7,6 +7,7 @@ from tools.rv_benchmark.valgrind_rv import ValgrindRV
 from tools.itc_benchmark.valgrind import Valgrind
 from tools.itc_benchmark.comcert import Compcert
 from tools.itc_benchmark.ub_san import UBSan
+from tools.itc_benchmark.tsan import TSan
 from tools.itc_benchmark.rv_match import RVMatch
 from tools.itc_benchmark.frama_c import FramaC
 from tools.itc_benchmark.tis import TIS
@@ -15,6 +16,7 @@ import os
 from tabulate import tabulate
 import sys
 from  utils.external_info import Info
+import pickle
 
 info = Info()
 error_info = info.get_spec_dict()
@@ -130,20 +132,31 @@ def tabulate_itc_criteria(tool_list, crunched_data):
         else:
             average.append(sum)
 
-
     table.append(average)
     print tabulate(table, headers=header, tablefmt="fancy_grid")
     print tabulate(table, headers=header, tablefmt="simple")
 
     print tabulate(raw_table, headers=["Error", "True Positive Count", "False Positive Count", "Tests Run"])
+
+
 def run_itc_benchmark(log_location):
     global tools
-    tools = [TIS(path, log_location)]
-    output_dicts = map(lambda x: x.run(), tools)
+    tools = [UBSan(path, log_location), TSan(path, log_location)]
+    # output_dicts = map(lambda x: x.run(), tools)
     names_list = map(lambda x: x.get_name(), tools)
-    data_list = map(lambda x: crunch_data(x), output_dicts)
-    tabulate_itc_criteria(names_list, data_list)
-    map(lambda x : x.cleanup(), tools)
+    tp_tuple_set = reduce(lambda a, b: a | b,
+                          map(lambda x: pickle.load(open(os.path.join(os.path.expanduser("~"), x + "_tp_pickle_file"))),
+                              names_list), set([]))
+    fp_tuple_set = reduce(lambda a, b: a | b,
+                          map(lambda x: pickle.load(open(os.path.join(os.path.expanduser("~"), x + "_fp_pickle_file"))),
+                              names_list), set([]))
+
+    print tp_tuple_set
+    print fp_tuple_set
+    # data_list = map(lambda x: crunch_data(x), output_dicts)
+    # tabulate_itc_criteria(names_list, data_list)
+    # map(lambda x : x.cleanup(), tools)
+
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:

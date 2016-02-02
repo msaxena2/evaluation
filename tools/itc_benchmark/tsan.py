@@ -12,14 +12,14 @@ import pickle
 class TimeoutException(Exception):
     pass
 
-class UBSan(Tool):
+class TSan(Tool):
 
     def signal_handler(self, signum, frame):
         raise TimeoutException("Timed out!")
 
 
     def check_output(self, output):
-         return "runtime error" in output.lower()
+         return "ThreadSanitizer: reported" in output
 
 
     def pickle_set(self, tp_set, fp_set):
@@ -38,7 +38,7 @@ class UBSan(Tool):
         mapping_dict = self.info.get_file_mapping()
         relevant_dirs = ["01.w_Defects", "02.wo_Defects"]
         for cur_dir in relevant_dirs:
-            for i in range(1, 2): #len(spec_dict.keys()) + 1):
+            for i in range(48, 49): #len(spec_dict.keys()) + 1):
                 if i not in output_dict:
                     output_dict[i] = {"count": spec_dict[i]["actual_count"], "TP": 0, "FP": 0}
                 if (i, -1) in ignore_list:
@@ -93,25 +93,26 @@ class UBSan(Tool):
         return self.name
 
 
+
+    def build(self):
+     if "Makefile" in os.listdir(os.getcwd()):
+        subprocess.check_call(["make", "clean"])
+        subprocess.check_call(["autoreconf", "--install"])
+        subprocess.check_call(["automake"])
+        subprocess.check_call(["./configure", "CC=clang", "CFLAGS=-g -fsanitize=thread"])
+        subprocess.check_call(["make"], stderr=subprocess.STDOUT)
+
+
     def __init__(self, benchmark_path, log_file_path):
         os.chdir(os.path.expanduser(benchmark_path))
-
         self.info = Info()
         self.benchmark_path = benchmark_path
-        self.name = "UBSan"
+        self.name = "TSan"
         self.logger = Logger(log_file_path, self.name)
         self.tp_pickle_file = os.path.join(os.path.expanduser("~"), self.name + "_tp_pickle_file")
         self.fp_pickle_file = os.path.join(os.path.expanduser("~"), self.name + "_fp_pickle_file")
         self.tp_pickle_list = []
         self.fp_pickle_list = []
-
-    def build(self):
-        if "Makefile" in os.listdir(os.getcwd()):
-            subprocess.check_call(["make", "clean"])
-        subprocess.check_call(["autoreconf", "--install"])
-        subprocess.check_call(["automake"])
-        subprocess.check_call(["./configure", "CC=clang", "CFLAGS=-g -fsanitize=undefined"])
-        subprocess.check_call(["make"], stderr=subprocess.STDOUT)
 
     def analyze(self):
         Tool.analyze(self)

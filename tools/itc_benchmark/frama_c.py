@@ -8,6 +8,7 @@ import signal
 import re
 from glob import glob
 from utils.logger import Logger
+import pickle
 
 class TimeoutException(Exception):
     pass
@@ -27,6 +28,11 @@ class FramaC(Tool):
                 return True
         return False
 
+    def pickle_set(self, tp_set, fp_set, tp_file, fp_file):
+        with open(tp_file, 'w+') as tp:
+            pickle.dump(tp_set, tp)
+        with open(fp_file, 'w+') as fp:
+            pickle.dump(fp_set, fp)
 
     def sanitize_header_file(self, original_header_path, new_header_path, framac_include_path, header_file_name):
         allowed_list = map(lambda z : z.split('/')[-1], [y for x in os.walk(framac_include_path) for y in glob(os.path.join(x[0], '*.h'))])
@@ -113,6 +119,8 @@ class FramaC(Tool):
         self.benchmark_path = benchmark_path
         self.name = "framac"
         self.logger = Logger(log_path, self.name)
+        self.fp_set = set()
+        self.tp_set = set()
 
     def analyze(self):
         Tool.analyze(self)
