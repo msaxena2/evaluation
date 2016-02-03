@@ -8,6 +8,7 @@ from tools.itc_benchmark.valgrind import Valgrind
 from tools.itc_benchmark.comcert import Compcert
 from tools.itc_benchmark.ub_san import UBSan
 from tools.itc_benchmark.tsan import TSan
+from tools.itc_benchmark.a_san import ASan
 from tools.itc_benchmark.rv_match import RVMatch
 from tools.itc_benchmark.frama_c import FramaC
 from tools.itc_benchmark.tis import TIS
@@ -85,6 +86,24 @@ def crunch_data(output_dict):
     return return_dict
 
 
+def merge_data(tp_tuple_set, fp_tuple_set):
+    return_dict = {}
+    spec_dict = info.get_spec_dict()
+
+    for key in spec_dict:
+        error_type = error_info[key]["type"]
+        if error_type not in return_dict:
+            return_dict[error_type] = {"count": 0, "TP": 0,
+                                       "FP": 0}
+        return_dict[error_type]["count"] += spec_dict[key]["actual_count"]
+        for testnum in range(1, spec_dict[key]["count"] + 1):
+            if (key, testnum) in tp_tuple_set:
+                return_dict[error_type]["TP"] += 1
+            if (key, testnum) in fp_tuple_set:
+                return_dict[error_type]["FP"] += 1
+    return return_dict
+
+
 def tabulate_itc_criteria(tool_list, crunched_data):
     header = [" "]
     for tool in tool_list:
@@ -141,8 +160,8 @@ def tabulate_itc_criteria(tool_list, crunched_data):
 
 def run_itc_benchmark(log_location):
     global tools
-    tools = [UBSan(path, log_location), TSan(path, log_location)]
-    # output_dicts = map(lambda x: x.run(), tools)
+    tools = [UBSan(path, log_location)]#, TSan(path, log_location), ASan(path, log_location)]
+    output_dicts = map(lambda x: x.run(), tools)
     names_list = map(lambda x: x.get_name(), tools)
     tp_tuple_set = reduce(lambda a, b: a | b,
                           map(lambda x: pickle.load(open(os.path.join(os.path.expanduser("~"), x + "_tp_pickle_file"))),
@@ -151,11 +170,16 @@ def run_itc_benchmark(log_location):
                           map(lambda x: pickle.load(open(os.path.join(os.path.expanduser("~"), x + "_fp_pickle_file"))),
                               names_list), set([]))
 
-    print tp_tuple_set
-    print fp_tuple_set
-    # data_list = map(lambda x: crunch_data(x), output_dicts)
-    # tabulate_itc_criteria(names_list, data_list)
-    # map(lambda x : x.cleanup(), tools)
+    data_list = [merge_data(tp_tuple_set, fp_tuple_set)]
+    tabulate_itc_criteria(["UBSan + TSan + ASan"], data_list)
+    map(lambda x: x.cleanup(), tools)
+    with open(os.path.join(os.path.expanduser("~"), "tp_set.txt"), 'w+') as tp_file:
+        for tuple in tp_tuple_set:
+            tp_file.write(str(tuple[0]) + ", " + str(tuple[1]) + "\n")
+
+    with open(os.path.join(os.path.expanduser("~"), "fp_set.txt"), 'w+') as fp_file:
+        for tuple in fp_tuple_set:
+            fp_file.write(str(tuple[0]) + ", " + str(tuple[1]) + "\n")
 
 
 if __name__ == '__main__':

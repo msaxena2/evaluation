@@ -38,7 +38,7 @@ class TSan(Tool):
         mapping_dict = self.info.get_file_mapping()
         relevant_dirs = ["01.w_Defects", "02.wo_Defects"]
         for cur_dir in relevant_dirs:
-            for i in range(48, 49): #len(spec_dict.keys()) + 1):
+            for i in range(48, len(spec_dict.keys()) + 1):
                 if i not in output_dict:
                     output_dict[i] = {"count": spec_dict[i]["actual_count"], "TP": 0, "FP": 0}
                 if (i, -1) in ignore_list:
@@ -59,11 +59,10 @@ class TSan(Tool):
                         #output = subprocess.check_output(kcc_command, stderr=subprocess.STDOUT, timeout=4)
                         process = subprocess.Popen(kcc_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                         process.wait(timeout=4)
-                        output = process.stdout.read() + process.stderr.read()
+                        output = process.stderr.read()
                         print output
                         if self.check_output(output):
                             result = "POS"
-
 
                     except subprocess.TimeoutExpired as e:
                         result = "TO"
@@ -99,7 +98,7 @@ class TSan(Tool):
         subprocess.check_call(["make", "clean"])
         subprocess.check_call(["autoreconf", "--install"])
         subprocess.check_call(["automake"])
-        subprocess.check_call(["./configure", "CC=clang", "CFLAGS=-g -fsanitize=thread"])
+        subprocess.check_call(["./configure", "CC=clang", "LD=clang", "CFLAGS=-g -O2 -fsanitize=thread"])
         subprocess.check_call(["make"], stderr=subprocess.STDOUT)
 
 
