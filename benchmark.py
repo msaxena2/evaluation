@@ -160,7 +160,7 @@ def tabulate_itc_criteria(tool_list, crunched_data):
 
 def run_itc_benchmark(log_location):
     global tools
-    tools = [UBSan(path, log_location)]#, TSan(path, log_location), ASan(path, log_location)]
+    tools = [UBSan(path, log_location), TSan(path, log_location), ASan(path, log_location)]
     output_dicts = map(lambda x: x.run(), tools)
     names_list = map(lambda x: x.get_name(), tools)
     tp_tuple_set = reduce(lambda a, b: a | b,

@@ -38,7 +38,7 @@ class TSan(Tool):
         mapping_dict = self.info.get_file_mapping()
         relevant_dirs = ["01.w_Defects", "02.wo_Defects"]
         for cur_dir in relevant_dirs:
-            for i in range(48, len(spec_dict.keys()) + 1):
+            for i in range(1, len(spec_dict.keys()) + 1):
                 if i not in output_dict:
                     output_dict[i] = {"count": spec_dict[i]["actual_count"], "TP": 0, "FP": 0}
                 if (i, -1) in ignore_list:
