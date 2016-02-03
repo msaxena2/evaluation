@@ -9,11 +9,13 @@ relevant_itc_dirs = ["02.w_defects", "01.wo_defects"]
 
 sanitize = ["stdlib.h", "stdio.h", "math.h", "string.h", "ctype.h", "unistd.h", "limits.h"]
 
+
 def bootstrap_file(file_path, temp_store_file_path, vflag, mode="NSH"):
-    headers = ["#include <stdio.h>", "#include <stdlib.h>", "#include <math.h>", "#include <string.h>", "#include <pthread.h>", "#include <ctype.h>", "#include <unistd.h>", "#include <limits.h>"]
+    headers = ["#include <stdio.h>", "#include <stdlib.h>", "#include <math.h>", "#include <string.h>",
+               "#include <pthread.h>", "#include <ctype.h>", "#include <unistd.h>", "#include <limits.h>"]
     if mode == "SH":
         sanpat = re.compile('.*<(.*)>')
-        headers = filter(lambda x : re.match(sanpat, x).group(1) in sanitize, headers)
+        headers = filter(lambda x: re.match(sanpat, x).group(1) in sanitize, headers)
 
     with open(temp_store_file_path, 'w+') as temp_file:
         count = 0
@@ -77,6 +79,15 @@ def checkdir(dir):
     return dir in relevant_itc_dirs
 
 
+def get_clang_warnings_set():
+    __location__ = os.path.realpath(
+            os.path.join(os.getcwd(), os.path.dirname(__file__)))
+
+    with open(os.path.join(__location__, "clang_warnings.txt")) as warning_file:
+         return set(map(lambda x : (int(x.split(" ")[0]), int(x.split(" ")[1])),  warning_file.read().split("\n")))
+
+
+
 
 class Info:
     def __init__(self):
@@ -103,7 +114,8 @@ class Info:
             reader = csv.reader(csv_file)
             for row in reader:
                 self.mapping[int(str(row[0]).strip())] = str(row[3]).strip()
-                self.file_info_dict[str(row[3]).strip()] = {"number": int(str(row[0]).strip()), "type": str(row[2]).strip()}
+                self.file_info_dict[str(row[3]).strip()] = {"number": int(str(row[0]).strip()),
+                                                            "type": str(row[2]).strip()}
 
         with open(self.ignore_file) as ignore_f:
             for line in ignore_f:
@@ -116,7 +128,7 @@ class Info:
                     self.ignore_dict[file_type] = {"ignored": 0, "files": {}}
 
                 if file_name not in self.ignore_dict[file_type]["files"]:
-                        self.ignore_dict[file_type]["files"][file_name] = [test_num]
+                    self.ignore_dict[file_type]["files"][file_name] = [test_num]
                 else:
                     self.ignore_dict[file_type]["files"][file_name].append(test_num)
 
@@ -134,7 +146,6 @@ class Info:
                 self.count_dict[type] = actual_count
             else:
                 self.count_dict[type] += actual_count
-
 
         self.total = 0
         for key in self.count_dict:

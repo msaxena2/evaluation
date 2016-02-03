@@ -12,6 +12,7 @@ from tools.itc_benchmark.a_san import ASan
 from tools.itc_benchmark.rv_match import RVMatch
 from tools.itc_benchmark.frama_c import FramaC
 from tools.itc_benchmark.tis import TIS
+import utils.external_info
 import math
 import os
 from tabulate import tabulate
@@ -161,7 +162,7 @@ def tabulate_itc_criteria(tool_list, crunched_data):
 def run_itc_benchmark(log_location):
     global tools
     tools = [UBSan(path, log_location), TSan(path, log_location), ASan(path, log_location)]
-    output_dicts = map(lambda x: x.run(), tools)
+    # output_dicts = map(lambda x: x.run(), tools)
     names_list = map(lambda x: x.get_name(), tools)
     tp_tuple_set = reduce(lambda a, b: a | b,
                           map(lambda x: pickle.load(open(os.path.join(os.path.expanduser("~"), x + "_tp_pickle_file"))),
@@ -170,6 +171,7 @@ def run_itc_benchmark(log_location):
                           map(lambda x: pickle.load(open(os.path.join(os.path.expanduser("~"), x + "_fp_pickle_file"))),
                               names_list), set([]))
 
+    tp_tuple_set = tp_tuple_set | utils.external_info.get_clang_warnings_set()
     data_list = [merge_data(tp_tuple_set, fp_tuple_set)]
     tabulate_itc_criteria(["UBSan + TSan + ASan"], data_list)
     map(lambda x: x.cleanup(), tools)
