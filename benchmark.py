@@ -9,9 +9,12 @@ from tools.itc_benchmark.comcert import Compcert
 from tools.itc_benchmark.ub_san import UBSan
 from tools.itc_benchmark.tsan import TSan
 from tools.itc_benchmark.a_san import ASan
+from tools.itc_benchmark.m_san import MSan
 from tools.itc_benchmark.rv_match import RVMatch
 from tools.itc_benchmark.frama_c import FramaC
 from tools.itc_benchmark.tis import TIS
+
+from tools.itc_benchmark.helgrind import Helgrind
 import utils.external_info
 import math
 import os
@@ -161,8 +164,9 @@ def tabulate_itc_criteria(tool_list, crunched_data):
 
 def run_itc_benchmark(log_location):
     global tools
-    tools = [UBSan(path, log_location), TSan(path, log_location), ASan(path, log_location)]
-    # output_dicts = map(lambda x: x.run(), tools)
+    #tools = [MSan(path, log_location), UBSan(path, log_location), TSan(path, log_location), ASan(path, log_location)]
+    tools = [Valgrind(path, log_location), Helgrind(path, log_location)]
+    #output_dicts = map(lambda x: x.run(), tools)
     names_list = map(lambda x: x.get_name(), tools)
     tp_tuple_set = reduce(lambda a, b: a | b,
                           map(lambda x: pickle.load(open(os.path.join(os.path.expanduser("~"), x + "_tp_pickle_file"))),
@@ -170,10 +174,11 @@ def run_itc_benchmark(log_location):
     fp_tuple_set = reduce(lambda a, b: a | b,
                           map(lambda x: pickle.load(open(os.path.join(os.path.expanduser("~"), x + "_fp_pickle_file"))),
                               names_list), set([]))
-
-    tp_tuple_set = tp_tuple_set | utils.external_info.get_clang_warnings_set()
+    print len(tp_tuple_set)
+    tp_tuple_set = tp_tuple_set | utils.external_info.get_gcc_warnings_set()
+    print len(tp_tuple_set)
     data_list = [merge_data(tp_tuple_set, fp_tuple_set)]
-    tabulate_itc_criteria(["UBSan + TSan + ASan"], data_list)
+    tabulate_itc_criteria(["Valgrind + Helgrind (GCC)"], data_list)
     map(lambda x: x.cleanup(), tools)
     with open(os.path.join(os.path.expanduser("~"), "tp_set.txt"), 'w+') as tp_file:
         for tuple in tp_tuple_set:

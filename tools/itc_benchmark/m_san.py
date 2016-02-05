@@ -12,7 +12,7 @@ import pickle
 class TimeoutException(Exception):
     pass
 
-class Valgrind(Tool):
+class MSan(Tool):
 
     def signal_handler(self, signum, frame):
         raise TimeoutException("Timed out!")
@@ -47,17 +47,17 @@ class Valgrind(Tool):
                     if (i, j) in ignore_list:
                         continue
                     arg = str('%03d' % i) + str('%03d' % j)
-                    kcc_command = ["valgrind", "--error-exitcode=10", os.path.join(self.benchmark_path, cur_dir, executable_name), arg]
+                    kcc_command = [os.path.join(self.benchmark_path, cur_dir, executable_name), arg]
                     print kcc_command
                     result = "NEG"
                     output = ""
                     try:
                         #output = subprocess.check_output(kcc_command, stderr=subprocess.STDOUT, timeout=4)
                         process = subprocess.Popen(kcc_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                        exit = process.wait(timeout=3)
+                        process.wait(timeout=3)
                         output = process.stderr.read()
                         print output
-                        if exit != 0:
+                        if "MemorySanitizer:" in output:
                             result = "POS"
 
 
@@ -95,7 +95,7 @@ class Valgrind(Tool):
             subprocess.check_call(["make", "clean"])
         subprocess.check_call(["autoreconf", "--install"])
         subprocess.check_call(["automake"])
-        subprocess.check_call(["./configure", "CFLAGS=-g"])
+        subprocess.check_call(["./configure", "CC=clang", "LD=clang", "CFLAGS=-g -O2 -fsanitize=memory"])
         subprocess.check_call(["make"], stderr=subprocess.STDOUT)
 
 
@@ -103,7 +103,7 @@ class Valgrind(Tool):
         os.chdir(os.path.expanduser(benchmark_path))
         self.info = Info()
         self.benchmark_path = benchmark_path
-        self.name = "Valgrind"
+        self.name = "MSan"
         self.logger = Logger(log_file_path, self.name)
         self.tp_pickle_file = os.path.join(os.path.expanduser("~"), self.name + "_tp_pickle_file")
         self.fp_pickle_file = os.path.join(os.path.expanduser("~"), self.name + "_fp_pickle_file")
