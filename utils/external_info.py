@@ -83,14 +83,14 @@ def get_clang_warnings_set():
     __location__ = os.path.realpath(
             os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
-    with open(os.path.join(__location__, "gcc_warnings.txt")) as warning_file:
+    with open(os.path.join(__location__, "clang_warnings.txt")) as warning_file:
          return set(map(lambda x : (int(x.split(" ")[0]), int(x.split(" ")[1])),  warning_file.read().split("\n")))
 
 def get_gcc_warnings_set():
     __location__ = os.path.realpath(
             os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
-    with open(os.path.join(__location__, "clang_warnings.txt")) as warning_file:
+    with open(os.path.join(__location__, "gcc_warnings.txt")) as warning_file:
          return set(map(lambda x : (int(x.split(" ")[0]), int(x.split(" ")[1])),  warning_file.read().split("\n")))
 
 

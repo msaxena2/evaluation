@@ -26,29 +26,33 @@ class MSan(Tool):
 
 
     def run(self, verbose=False, log_location=None):
-        self.build()
+        #self.build()
         output_dict = {}
         spec_dict = self.info.get_spec_dict()
         ignore_list = self.info.get_ignore_list()
         os.chdir(self.benchmark_path)
         mapping_dict = self.info.get_file_mapping()
         relevant_dirs = ["01.w_Defects", "02.wo_Defects"]
+        tests_run = 0
         for cur_dir in relevant_dirs:
             for i in range(1, len(spec_dict.keys()) + 1):
                 if i not in output_dict:
                     output_dict[i] = {"count": spec_dict[i]["actual_count"], "TP": 0, "FP": 0}
                 if (i, -1) in ignore_list:
+                    print str((i, -1))
                     continue
                 file_prefix = mapping_dict[i]
-                print self.name + " being tested on file " + str(i)
+                #print self.name + " being tested on file " + str(i)
                 executable_name = cur_dir.split('.')[0] + "_" + cur_dir.split('.')[-1]
                 #bar = progressbar.ProgressBar()
-                for j in range(1, spec_dict[i]["count"]):
+                for j in range(1, spec_dict[i]["count"] + 1):
                     if (i, j) in ignore_list:
+                        print str(((i, j)))
                         continue
+                    tests_run += 1
                     arg = str('%03d' % i) + str('%03d' % j)
                     kcc_command = [os.path.join(self.benchmark_path, cur_dir, executable_name), arg]
-                    print kcc_command
+                    #print kcc_command
                     result = "NEG"
                     output = ""
                     try:
@@ -56,7 +60,7 @@ class MSan(Tool):
                         process = subprocess.Popen(kcc_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                         process.wait(timeout=3)
                         output = process.stderr.read()
-                        print output
+                        #print output
                         if "MemorySanitizer:" in output:
                             result = "POS"
 
@@ -81,8 +85,9 @@ class MSan(Tool):
                         else:
                             self.logger.log_output(output, file_prefix + ".c", cur_dir, j, "NEG")
 
-        print self.tp_pickle_list
+        #print self.tp_pickle_list
         self.pickle_set(set(self.tp_pickle_list), set(self.fp_pickle_list))
+        print tests_run
         return output_dict
 
     def get_name(self):

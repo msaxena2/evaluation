@@ -141,21 +141,26 @@ def tabulate_itc_criteria(tool_list, crunched_data):
 
     count_dict = info.get_count_dict()
     test_total = info.get_total()
-    average = ["Average"]
+    average = ["Average (weighted)"]
+    uaverage = ["Average (unweighted)"]
     for column in range(1, len(table[0])):
         if column % 3 == 0:
             prod = math.sqrt(average[-1] * average[-2])
             average.append(prod)
+            prod = math.sqrt(uaverage[-1] * uaverage[-2])
+            uaverage.append(prod)
             continue
         sum = 0
+        usum = 0
         for row in range(0, len(table)):
             error = table[row][0]
             sum += float(table[row][column]) * (float(count_dict[error]) / test_total)
-
-        else:
-            average.append(sum)
+            usum += float(table[row][column])
+        average.append(sum)
+        uaverage.append((usum / float(9)))
 
     table.append(average)
+    table.append(uaverage)
     print tabulate(table, headers=header, tablefmt="fancy_grid")
     print tabulate(table, headers=header, tablefmt="simple")
 
@@ -164,9 +169,9 @@ def tabulate_itc_criteria(tool_list, crunched_data):
 
 def run_itc_benchmark(log_location):
     global tools
-    #tools = [MSan(path, log_location), UBSan(path, log_location), TSan(path, log_location), ASan(path, log_location)]
-    tools = [Valgrind(path, log_location), Helgrind(path, log_location)]
-    #output_dicts = map(lambda x: x.run(), tools)
+    #tools = [MSan(path, log_location)]#, UBSan(path, log_location), TSan(path, log_location), ASan(path, log_location)]
+    tools = [Helgrind(path, log_location), Valgrind(path, log_location)]
+    output_dicts = map(lambda x: x.run(), tools)
     names_list = map(lambda x: x.get_name(), tools)
     tp_tuple_set = reduce(lambda a, b: a | b,
                           map(lambda x: pickle.load(open(os.path.join(os.path.expanduser("~"), x + "_tp_pickle_file"))),
@@ -174,11 +179,12 @@ def run_itc_benchmark(log_location):
     fp_tuple_set = reduce(lambda a, b: a | b,
                           map(lambda x: pickle.load(open(os.path.join(os.path.expanduser("~"), x + "_fp_pickle_file"))),
                               names_list), set([]))
-    print len(tp_tuple_set)
+
+    #print len(tp_tuple_set)
     tp_tuple_set = tp_tuple_set | utils.external_info.get_gcc_warnings_set()
-    print len(tp_tuple_set)
+    #print len(tp_tuple_set)
     data_list = [merge_data(tp_tuple_set, fp_tuple_set)]
-    tabulate_itc_criteria(["Valgrind + Helgrind (GCC)"], data_list)
+    tabulate_itc_criteria(["Valgrind+Helgrind"], data_list)
     map(lambda x: x.cleanup(), tools)
     with open(os.path.join(os.path.expanduser("~"), "tp_set.txt"), 'w+') as tp_file:
         for tuple in tp_tuple_set:

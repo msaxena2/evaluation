@@ -8,6 +8,8 @@ from utils.logger import Logger
 import re
 import utils
 import pickle
+from utils.make_pipeline import MakePipeline
+
 
 class TimeoutException(Exception):
     pass
@@ -43,7 +45,7 @@ class Valgrind(Tool):
                 print self.name + " being tested on file " + str(i)
                 executable_name = cur_dir.split('.')[0] + "_" + cur_dir.split('.')[-1]
                 #bar = progressbar.ProgressBar()
-                for j in range(1, spec_dict[i]["count"]):
+                for j in range(1, spec_dict[i]["count"] + 1):
                     if (i, j) in ignore_list:
                         continue
                     arg = str('%03d' % i) + str('%03d' % j)
@@ -100,18 +102,21 @@ class Valgrind(Tool):
 
 
     def __init__(self, benchmark_path, log_file_path):
-        os.chdir(os.path.expanduser(benchmark_path))
-        self.info = Info()
-        self.benchmark_path = benchmark_path
+        self.pipeline = MakePipeline(benchmark_path)
         self.name = "Valgrind"
-        self.logger = Logger(log_file_path, self.name)
-        self.tp_pickle_file = os.path.join(os.path.expanduser("~"), self.name + "_tp_pickle_file")
-        self.fp_pickle_file = os.path.join(os.path.expanduser("~"), self.name + "_fp_pickle_file")
-        self.tp_pickle_list = []
-        self.fp_pickle_list = []
+        self. logger = Logger(log_file_path, self.name)
+        self.output_dict = {}
+        os.chdir(os.path.expanduser(benchmark_path))
 
-    def analyze(self):
+    def analyze_output(self, stdout, stderr, cur_dir, i, j):
         Tool.analyze(self)
+        if i not in self.output_dict:
+            self.output_dict[i] = {"count": 0, "TP":0, "FP":0}
+        self.output_dict[i]["count"] += 1
+
+
+
+
 
     def cleanup(self):
         Tool.cleanup(self)
