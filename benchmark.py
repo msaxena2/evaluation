@@ -87,6 +87,8 @@ def crunch_data(output_dict):
         return_dict[return_key]["TP"] += output_dict[key]["TP"]
         return_dict[return_key]["FP"] += output_dict[key]["FP"]
 
+    for error_key in return_dict:
+        return_dict[error_key]["count"] = return_dict[error_key]["count"]/2
     return return_dict
 
 
@@ -169,30 +171,17 @@ def tabulate_itc_criteria(tool_list, crunched_data):
 
 def run_itc_benchmark(log_location):
     global tools
-    #tools = [MSan(path, log_location)]#, UBSan(path, log_location), TSan(path, log_location), ASan(path, log_location)]
-    tools = [Helgrind(path, log_location), Valgrind(path, log_location)]
+    tools = [MSan(path, log_location)]
     output_dicts = map(lambda x: x.run(), tools)
     names_list = map(lambda x: x.get_name(), tools)
-    tp_tuple_set = reduce(lambda a, b: a | b,
-                          map(lambda x: pickle.load(open(os.path.join(os.path.expanduser("~"), x + "_tp_pickle_file"))),
-                              names_list), set([]))
-    fp_tuple_set = reduce(lambda a, b: a | b,
-                          map(lambda x: pickle.load(open(os.path.join(os.path.expanduser("~"), x + "_fp_pickle_file"))),
-                              names_list), set([]))
-
-    #print len(tp_tuple_set)
-    tp_tuple_set = tp_tuple_set | utils.external_info.get_gcc_warnings_set()
-    #print len(tp_tuple_set)
+    tp_tuple_set = reduce(lambda a, b: a | b, map(lambda x: x.get_tp_set(), tools), set([]))
+    fp_tuple_set = reduce(lambda a, b: a | b, map(lambda x: x.get_fp_set(), tools), set([]))
+    tabulate_itc_criteria(names_list, map(lambda x: crunch_data(x), output_dicts))
+    #tp_tuple_set = tp_tuple_set | utils.external_info.get_clang_warnings_set()
     data_list = [merge_data(tp_tuple_set, fp_tuple_set)]
-    tabulate_itc_criteria(["Valgrind+Helgrind"], data_list)
+    tabulate_itc_criteria(["+".join(names_list)], data_list)
     map(lambda x: x.cleanup(), tools)
-    with open(os.path.join(os.path.expanduser("~"), "tp_set.txt"), 'w+') as tp_file:
-        for tuple in tp_tuple_set:
-            tp_file.write(str(tuple[0]) + ", " + str(tuple[1]) + "\n")
 
-    with open(os.path.join(os.path.expanduser("~"), "fp_set.txt"), 'w+') as fp_file:
-        for tuple in fp_tuple_set:
-            fp_file.write(str(tuple[0]) + ", " + str(tuple[1]) + "\n")
 
 
 if __name__ == '__main__':

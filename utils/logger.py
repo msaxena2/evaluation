@@ -27,7 +27,7 @@ class Logger:
 
     def log_output(self, output, file, folder, test_num, result):
          output_new = self.sanitize_paths(output)
-         self.log_file.write(self.tool_name + " being tested on " + folder + " " + file + " " + str(test_num) + "\n\n")
+         self.log_file.write(self.tool_name + " being tested on " + folder + " " + str(file) + " " + str(test_num) + "\n\n")
          self.log_file.write(output_new + "\n")
          if(result == "TP"):
              self.log_file.write("Confirmed as True Positive \n\n")

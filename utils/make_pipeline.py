@@ -22,7 +22,8 @@ class MakePipeline:
         spec_dict = self.info.get_spec_dict()
         ignore_list = self.info.get_ignore_list()
         mapping_dict = self.info.get_file_mapping()
-        for cur_dir in ["01.w_defects", "02.wo_defects"]:
+        for cur_dir in ["01.w_Defects", "02.wo_Defects"]:
+            benchmark = 0
             executable_name = cur_dir.split('.')[0] + "_" + cur_dir.split('.')[-1]
             for i in spec_dict:
                 if (i, -1) in ignore_list:
@@ -30,17 +31,18 @@ class MakePipeline:
                 for j in xrange(1, spec_dict[i]["count"] + 1):
                     if (i, j) in ignore_list:
                         continue
+                    benchmark += 1
                     file_prefix = mapping_dict[i]
                     arg = str('%03d' % i) + str('%03d' % j)
                     command = pre_condition_array + [os.path.join(self.benchmark_path, cur_dir, executable_name), arg]
                     try:
-                        process = subprocess.Popen(command)
+                        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                         exit_code = process.wait(timeout=timeout)
                         tool_self.analyze_output(exit_code, process.stdout.read(), process.stderr.read(), cur_dir, i, j)
                     except subprocess.TimeoutExpired:
                         tool_self.analyze_timeout(cur_dir, i, j)
                     finally:
                         process.kill()
-
+            print benchmark
 
 

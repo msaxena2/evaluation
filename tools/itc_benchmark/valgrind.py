@@ -26,25 +26,28 @@ class Valgrind(Tool):
         os.chdir(os.path.expanduser(benchmark_path))
 
     def run(self):
-        self.pipeline.build_benchmark(CC="gcc", CFLAGS="-g -O2", LD="gcc")
+        self.pipeline.build_benchmark(CC="gcc", CFLAGS="", LD="gcc")
         self.pipeline.run_bechmark(self, ["valgrind", "--error-exitcode=10"], 6)
+        return self.output_dict
 
     def get_output_dict(self):
         return self.output_dict
 
     def get_tp_set(self):
+        print len(self.tp_set)
         return self.tp_set
 
     def get_fp_set(self):
+        print len(self.fp_set)
         return self.fp_set
 
     def analyze_output(self, exit_code, stdout, stderr, cur_dir, i, j):
-        Tool.analyze(self)
+        print(stderr)
         if i not in self.output_dict:
             self.output_dict[i] = {"count": 0, "TP": 0, "FP": 0}
         self.output_dict[i]["count"] += 1
         if exit_code != 0:
-            if "w_defects" in cur_dir:
+            if "w_Defects" in cur_dir:
                 self.output_dict[i]["TP"] += 1
                 self.logger.log_output(stderr, i, cur_dir, j, "TP")
                 self.tp_set.add((i, j))
@@ -58,7 +61,7 @@ class Valgrind(Tool):
     def analyze_timeout(self, cur_dir, i, j):
         if i not in self.output_dict:
             self.output_dict[i] = {"count": 0, "TP": 0, "FP": 0}
-        self.output_dict["count"] += 1
+        self.output_dict[i]["count"] += 1
         self.logger.log_output("", i, cur_dir, j, "NEG")
 
     def cleanup(self):
