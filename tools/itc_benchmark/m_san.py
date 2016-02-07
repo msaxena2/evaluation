@@ -27,7 +27,7 @@ class MSan(Tool):
         os.chdir(os.path.expanduser(benchmark_path))
 
     def run(self):
-        #self.pipeline.build_benchmark(CC="clang", CFLAGS="-g -O2 -fsanitize=memory", LD="clang")
+        self.pipeline.build_benchmark(CC="clang", CFLAGS="-g -fsanitize=memory", LD="clang")
         self.pipeline.run_bechmark(self, [], 2)
         return self.output_dict
 

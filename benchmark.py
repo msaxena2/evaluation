@@ -171,13 +171,13 @@ def tabulate_itc_criteria(tool_list, crunched_data):
 
 def run_itc_benchmark(log_location):
     global tools
-    tools = [MSan(path, log_location)]
+    tools = [MSan(path, log_location), UBSan(path, log_location), TSan(path, log_location), UBSan(path, log_location)]
     output_dicts = map(lambda x: x.run(), tools)
     names_list = map(lambda x: x.get_name(), tools)
     tp_tuple_set = reduce(lambda a, b: a | b, map(lambda x: x.get_tp_set(), tools), set([]))
     fp_tuple_set = reduce(lambda a, b: a | b, map(lambda x: x.get_fp_set(), tools), set([]))
     tabulate_itc_criteria(names_list, map(lambda x: crunch_data(x), output_dicts))
-    #tp_tuple_set = tp_tuple_set | utils.external_info.get_clang_warnings_set()
+    tp_tuple_set = tp_tuple_set | utils.external_info.get_clang_warnings_set()
     data_list = [merge_data(tp_tuple_set, fp_tuple_set)]
     tabulate_itc_criteria(["+".join(names_list)], data_list)
     map(lambda x: x.cleanup(), tools)
