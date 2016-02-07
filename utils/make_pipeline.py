@@ -36,6 +36,7 @@ class MakePipeline:
                     arg = str('%03d' % i) + str('%03d' % j)
                     command = pre_condition_array + [os.path.join(self.benchmark_path, cur_dir, executable_name), arg]
                     try:
+                        print + tool_self.get_name() + " ** ".join(command)
                         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                         exit_code = process.wait(timeout=timeout)
                         tool_self.analyze_output(exit_code, process.stdout.read(), process.stderr.read(), cur_dir, i, j)
