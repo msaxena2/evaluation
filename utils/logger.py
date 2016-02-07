@@ -30,15 +30,15 @@ class Logger:
          self.log_file.write(self.tool_name + " being tested on " + folder + " " + file + " " + str(test_num) + "\n\n")
          self.log_file.write(output_new + "\n")
          if(result == "TP"):
-             self.log_file.write("Confirmed as True Positive \n")
+             self.log_file.write("Confirmed as True Positive \n\n")
          elif(result == "FP"):
-             self.log_file.write("Confirmed as False Positive \n")
+             self.log_file.write("Confirmed as False Positive \n\n")
 
          elif(result == "TO"):
-             self.log_file.write("Operation Timed Out Considered a negative \n")
+             self.log_file.write("Operation Timed Out Considered a negative \n\n")
 
          else:
-             self.log_file.write("Confirmed Negative \n")
+             self.log_file.write("Confirmed Negative \n\n")
 
 
 
