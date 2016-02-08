@@ -12,7 +12,8 @@ class MakePipeline:
         os.chdir(self.benchmark_path)
         if "Makefile" in os.listdir(os.getcwd()):
             subprocess.check_call(["make", "clean"])
-        subprocess.check_call(["autoreconf", "--install"])
+            pass
+        subprocess.check_call(["./bootstrap"])
         subprocess.check_call(["automake"])
         subprocess.check_call(["./configure", "CC=" + CC, "LD=" + LD, "CFLAGS=" + CFLAGS])
         subprocess.check_call(["make"], stderr=subprocess.STDOUT)
@@ -45,5 +46,3 @@ class MakePipeline:
                     finally:
                         process.kill()
             print benchmark
-
-

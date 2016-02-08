@@ -1,12 +1,11 @@
 import os
 import subprocess32 as subprocess
 import utils.external_info
-from tools.rv_benchmark.tool import Tool
 from utils.external_info import Info
 from utils.logger import Logger
 
 
-class FramaC(Tool):
+class FramaC:
 
 
     def analyze_output(self, output, file_name):
@@ -39,7 +38,7 @@ class FramaC(Tool):
             mapping_dict = self.info.get_file_mapping()
             for i in range(1, len(spec_dict.keys()) + 1):
                 if i not in output_dict:
-                    output_dict[i] = {"count": spec_dict[i]["actual_count"], "TP": 0, "FP": 0}
+                    output_dict[i] = {"count": 0, "TP": 0, "FP": 0}
                 if (i, -1) in self.info.get_ignore_list():
                     continue
                 file_prefix = mapping_dict[i]
@@ -48,6 +47,7 @@ class FramaC(Tool):
                 for j in range(1, spec_dict[i]["count"] + 1):
                     if (i, j) in self.info.get_ignore_list():
                         continue
+                    output_dict[i]["count"] += 1
                     vflag = str('%03d' % j)
                     framac_command = self.get_framac_command(cur_dir, file_prefix, "framac_dir", vflag)
                     print self.name + " ** " + " ".join(framac_command)
@@ -60,8 +60,10 @@ class FramaC(Tool):
                             if verdict:
                                 if "w_Defects" in cur_dir:
                                     output_dict[i]["TP"] += 1
+                                    self.tp_set.add((i, j))
                                 else:
                                     output_dict[i]["FP"] += 1
+                                    self.fp_set.add((i, j))
 
                     except subprocess.TimeoutExpired:
                         self.logger.log_output(output, i, cur_dir, j, "TO")
@@ -93,3 +95,9 @@ class FramaC(Tool):
     def cleanup(self):
         Tool.cleanup(self)
         self.logger.close_log()
+
+    def get_tp_set(self):
+        return self.tp_set
+
+    def get_fp_set(self):
+        return self.fp_set

@@ -1,10 +1,9 @@
 import os
 import subprocess32 as subprocess
-from tools.rv_benchmark.tool import Tool
 from utils.logger import Logger
 from utils.make_pipeline import MakePipeline
 
-class Valgrind(Tool):
+class Valgrind:
     def get_name(self):
         return self.name
 
@@ -66,5 +65,4 @@ class Valgrind(Tool):
         self.logger.log_output("", i, cur_dir, j, "NEG")
 
     def cleanup(self):
-        Tool.cleanup(self)
         self.logger.close_log()

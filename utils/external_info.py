@@ -24,9 +24,9 @@ def bootstrap_file(file_path, temp_store_file_path, vflag, mode="NSH"):
                 if "HeaderFile.h" in line:
                     temp_file.write("\n".join(headers))
                     temp_file.write("\n")
-                    temp_file.write("extern int idx, sink;\n")
-                    temp_file.write("extern double dsink;\n")
-                    temp_file.write("extern void *psink;\n")
+                    temp_file.write("int idx, sink;\n")
+                    temp_file.write("double dsink;\n")
+                    temp_file.write("void *psink;\n")
                     continue
 
                 if "extern volatile int vflag" in line:

@@ -1,9 +1,8 @@
 import os
-from tools.rv_benchmark.tool import Tool
 from utils.logger import Logger
 from utils.make_pipeline import MakePipeline
 
-class MSan(Tool):
+class MSan:
     def get_name(self):
         return self.name
 

@@ -1,21 +1,11 @@
 import os
-import subprocess
+import subprocess32 as subprocess
 import utils.external_info
-from tools.rv_benchmark.tool import Tool
 from utils.external_info import Info
-import progressbar
-import signal
 import utils.logger
 
 
-class TimeoutException(Exception):
-    pass
-
-
-class Compcert(Tool):
-    def signal_handler(self, signum, frame):
-        raise TimeoutException("Timed out!")
-
+class Compcert:
     def get_compcert_command(self, cur_dir, file_prefix, temp_dir_name, vflag):
         cur_path = os.path.join(self.benchmark_path, cur_dir)
         temp_path = os.path.join(cur_path, temp_dir_name)
@@ -29,6 +19,13 @@ class Compcert(Tool):
                 "-I" + os.path.join(self.benchmark_path, "include"),
                 bootstrap_file_path]
 
+    def check_output(self, output):
+        if "ERROR" not in output.upper() and "UNDEFINED" not in output.upper():
+            return False
+        if "Stuck state: calling" in output:
+            return False
+        return True
+
     def run(self):
         relevant_dirs = ["01.w_Defects", "02.wo_Defects"]
         output_dict = {}
@@ -38,49 +35,45 @@ class Compcert(Tool):
             mapping_dict = self.info.get_file_mapping()
             for i in range(1, len(spec_dict.keys()) + 1):
                 if i not in output_dict:
-                    output_dict[i] = {"count": spec_dict[i]["actual_count"], "TP": 0, "FP": 0}
+                    output_dict[i] = {"count": 0, "TP": 0, "FP": 0}
                 if (i, -1) in ignore_list:
                     continue
                 file_prefix = mapping_dict[i]
                 print self.name + " being tested on folder " + cur_dir + " and file " + file_prefix + ".c"
-                # bar = progressbar.ProgressBar(redirect_stdout=True)
-                for j in range(1, spec_dict[i]["count"]):
+                output = ""
+                for j in range(1, spec_dict[i]["count"] + 1):
                     if (i, j) in ignore_list:
                         continue
+                    output_dict[i]["count"] += 1
                     vflag = str('%03d' % j)
+                    compcert_command = self.get_compcert_command(cur_dir, file_prefix, "bootstrap_dir", vflag)
+                    print " ".join(compcert_command)
+                    verdict = "NEG"
                     try:
-                        written = False
-                        compcert_command = self.get_compcert_command(cur_dir, file_prefix, "bootstrap_dir", vflag)
-                        print compcert_command
                         if len(compcert_command) != 0:
-                            signal.signal(signal.SIGALRM, self.signal_handler)
-                            signal.alarm(10)
-                            subprocess.check_output(compcert_command, stderr=subprocess.STDOUT)
-                    except subprocess.CalledProcessError as e:
-                        written = True
-                        print e.output
-                        if "ERROR" not in e.output.upper() and "UNDEFINED" not in e.output.upper():
-                            self.logger.log_output(e.output, file_prefix + ".c", cur_dir, j, "NEG")
-                            continue
-                        if "Stuck state: calling" in e.output:
-                            self.logger.log_output(e.output, file_prefix + ".c", cur_dir, j, "NEG")
-                            continue
-                        if "w_Defects" in cur_dir:
-                            output_dict[i]["TP"] += 1
-                            self.logger.log_output(e.output, file_prefix + ".c", cur_dir, j, "TP")
-                        else:
-                            output_dict[i]["FP"] += 1
-                            self.logger.log_output(e.output, file_prefix + ".c", cur_dir, j, "FP")
+                            process = subprocess.Popen(compcert_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                            exit_code = process.wait(timeout=5)
+                            output = process.stdout.read() + process.stderr.read()
+                            print output
+                            if exit_code != 0:
+                                if self.check_output(output):
+                                    if "w_Defects" in cur_dir:
+                                        output_dict[i]["TP"] += 1
+                                        verdict = "TP"
+                                        self.tp_set.add((i, j))
+                                    else:
+                                        output_dict[i]["FP"] += 1
+                                        verdict = "FP"
+                                        self.fp_set.add((i, j))
 
+                    except subprocess.TimeoutExpired:
+                        verdict = "TO"
 
-                    except TimeoutException:
-                        written = True
-                        self.logger.log_output(e.output, file_prefix + ".c", cur_dir, j, "TO")
-                        continue
                     finally:
-                        if not written:
-                            self.logger.log_output(e.output, file_prefix + ".c", cur_dir, j, "NEG")
-                        signal.alarm(0)
+                        if len(compcert_command) > 0:
+                            process.kill()
+                        self.logger.log_output(output, i, cur_dir, j, verdict)
+
         return output_dict
 
     def get_name(self):
@@ -91,10 +84,8 @@ class Compcert(Tool):
         self.benchmark_path = benchmark_path
         self.name = "Compcert"
         self.logger = utils.logger.Logger(log_file_path, self.name)
-
-    def analyze(self):
-        Tool.analyze(self)
+        self.tp_set = set([])
+        self.fp_set = set([])
 
     def cleanup(self):
-        Tool.cleanup(self)
         self.logger.close_log()
