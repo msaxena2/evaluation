@@ -1,0 +1,22 @@
+TIS being tested on 01.w_Defects bit_shift.c 1
+
+[kernel] Parsing i (no preprocessing) 
+[kernel] Parsing c (with preprocessing) 
+[kernel] Parsing c (with preprocessing) 
+[kernel] Parsing c (with preprocessing) 
+[kernel] Parsing c (with preprocessing) 
+[kernel] Parsing c (with preprocessing) 
+[kernel] Parsing c (with preprocessing) 
+[kernel] Parsing c (with preprocessing) 
+[value] Analyzing a complete application starting at main 
+[value] Computing initial state 
+[value] Initial state computed 
+] warning: invalid RHS operand for shift. assert 0 ≤ 32 < 32; 
+                  stack: bit_shift_001 :: 8 <- 
+                         main 
+[value] Stopping at nth alarm 
+[value] user error: Degeneration occurred: 
+                    results are not correct for lines of code that can be reached from the degeneration point. 
+ 
+
+Confirmed as True Positive 
