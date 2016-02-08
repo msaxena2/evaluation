@@ -1,19 +1,18 @@
 import csv
 import os
-from tempfile import mkstemp
-from shutil import move
-from os import remove, close
 import re
-
+import subprocess
+from glob import glob
 relevant_itc_dirs = ["02.w_defects", "01.wo_defects"]
-
-sanitize = ["stdlib.h", "stdio.h", "math.h", "string.h", "ctype.h", "unistd.h", "limits.h"]
 
 
 def bootstrap_file(file_path, temp_store_file_path, vflag, mode="NSH"):
     headers = ["#include <stdio.h>", "#include <stdlib.h>", "#include <math.h>", "#include <string.h>",
                "#include <pthread.h>", "#include <ctype.h>", "#include <unistd.h>", "#include <limits.h>"]
     if mode == "SH":
+        include_path = subprocess.check_output(["frama-c", "-print-path"])
+        sanitize = map(lambda z: z.split('/')[-1],
+                           [y for x in os.walk(include_path) for y in glob(os.path.join(x[0], '*.h'))])
         sanpat = re.compile('.*<(.*)>')
         headers = filter(lambda x: re.match(sanpat, x).group(1) in sanitize, headers)
 
@@ -49,30 +48,6 @@ def bootstrap_file(file_path, temp_store_file_path, vflag, mode="NSH"):
                 temp_file.write(line)
 
 
-def sanitize_cil_file(file_path):
-    fh, abs_path = mkstemp()
-    sanitize = ["stdlib.h", "stdio.h", "math.h", "string.h", "pthread.h", "ctype.h", "unistd.h", "limits.h"]
-    with open(abs_path, 'w') as new_file:
-        with open(file_path) as old_file:
-            extern_found = False
-            for line in old_file:
-                write = True
-                # for word in sanitize:
-                #     if word in line:
-                #         write = False
-                if "extern" in line:
-                    extern_found = True
-
-                if extern_found and ";" in line:
-                    extern_found = False
-                    continue
-
-                if write and (not extern_found):
-                    new_file.write(line)
-
-    close(fh)
-    remove(file_path)
-    move(abs_path, file_path)
 
 
 def checkdir(dir):

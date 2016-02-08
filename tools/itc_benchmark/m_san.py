@@ -1,5 +1,4 @@
 import os
-import subprocess32 as subprocess
 from tools.rv_benchmark.tool import Tool
 from utils.logger import Logger
 from utils.make_pipeline import MakePipeline
@@ -8,13 +7,6 @@ class MSan(Tool):
     def get_name(self):
         return self.name
 
-    def build(self):
-        if "Makefile" in os.listdir(os.getcwd()):
-            subprocess.check_call(["make", "clean"])
-        subprocess.check_call(["autoreconf", "--install"])
-        subprocess.check_call(["automake"])
-        subprocess.check_call(["./configure", "CFLAGS=-g"])
-        subprocess.check_call(["make"], stderr=subprocess.STDOUT)
 
     def __init__(self, benchmark_path, log_file_path):
         self.pipeline = MakePipeline(benchmark_path)
@@ -69,7 +61,10 @@ class MSan(Tool):
         self.neg_count += 1
 
     def cleanup(self):
-        print "Total Count= " + str(self.neg_count + len(self.tp_set) + len(self.fp_set))
-
+        print "Numbers for " + self.name
+        print "Total Count = " + str(self.neg_count + len(self.tp_set) + len(self.fp_set))
+        print "TP Count = " + str(len(self.tp_set))
+        print "FP Count = " + str(len(self.fp_set))
+        print "Negatives Count = " + str(self.neg_count)
         Tool.cleanup(self)
         self.logger.close_log()

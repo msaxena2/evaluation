@@ -1,125 +1,77 @@
 import os
-import subprocess
-
 from tools.rv_benchmark.tool import Tool
-from utils.external_info import Info
-import signal
 from utils.logger import Logger
+from utils.make_pipeline import MakePipeline
 import re
-import utils
-
-class TimeoutException(Exception):
-    pass
 
 class RVMatch(Tool):
+    def get_name(self):
+        return self.name
 
-    def signal_handler(self, signum, frame):
-        raise TimeoutException("Timed out!")
-
-    def get_kcc_command(self, cur_dir, file_prefix, temp_dir_name, vflag):
-        cur_path = os.path.join(self.benchmark_path, cur_dir)
-        temp_path = os.path.join(cur_path, temp_dir_name)
-        if not os.path.exists(temp_path):
-            os.mkdir(temp_path)
-
-        relevant_file_path = os.path.join(cur_path, file_prefix + ".c")
-        bootstrap_file_path = os.path.join(temp_path, file_prefix + "-temp.c")
-        utils.external_info.bootstrap_file(relevant_file_path, bootstrap_file_path, vflag)
-        return ["kcc", "-flint", "-lm", "-I" + os.path.join(self.benchmark_path, "include"), "-o", os.path.join(temp_path, file_prefix + "-temp.out"), bootstrap_file_path, os.path.join(self.benchmark_path, "extern.c")]
-
-
-    def get_run_command(self, cur_dir, file_prefix, temp_dir_name):
-        relevant_file_path = os.path.join(self.benchmark_path, cur_dir, temp_dir_name, file_prefix + "-temp.out")
-        print relevant_file_path
-        if os.path.exists(relevant_file_path):
-            return [relevant_file_path]
-        return []
-
-    def analyze_output(self, output):
+    def check_output(self, output):
         print "Checking output " + output
         error_regex = re.compile('(UB|CV|IMPL|L|USP)\-([A-Z]+[0-9]*)')
         if re.search(error_regex, output):
             return True
         return False
 
-    def run(self, verbose=False, log_location=None):
-        output_dict = {}
-        spec_dict = self.info.get_spec_dict()
-        ignore_list = self.info.get_ignore_list()
-        os.chdir(self.benchmark_path)
-        mapping_dict = self.info.get_file_mapping()
-        relevant_dirs = ["01.w_Defects", "02.wo_Defects"]
-        for cur_dir in relevant_dirs:
-            for i in range(1, len(spec_dict.keys()) + 1):
-                if i not in output_dict:
-                    output_dict[i] = {"count": spec_dict[i]["actual_count"], "TP": 0, "FP": 0}
-                if (i, -1) in ignore_list:
-                    continue
-                file_prefix = mapping_dict[i]
-                print self.name + " being tested on file " + str(i)
-                executable_name = cur_dir.split('.')[0] + "_" + cur_dir.split('.')[-1]
-                #bar = progressbar.ProgressBar()
-                for j in range(1, spec_dict[i]["count"]):
-                    if (i, j) in ignore_list:
-                        continue
-                    arg = str('%03d' % i) + str('%03d' % j)
-                    kcc_command = [os.path.join(self.benchmark_path, cur_dir, executable_name), arg]
-                    print kcc_command
-                    result = "NEG"
-                    output = ""
-                    try:
-                        signal.signal(signal.SIGALRM, self.signal_handler)
-                        signal.alarm(12)
-                        output = subprocess.check_output(kcc_command, stderr=subprocess.STDOUT)
-                        if self.analyze_output(output):
-                            result = "POS"
-
-                    except subprocess.CalledProcessError as e:
-                        output = e.output
-                        if self.analyze_output(e.output):
-                            result = "POS"
-
-                    except TimeoutException:
-                        result = "TO"
-
-                    finally:
-                        signal.alarm(0)
-                        if result == "POS":
-                            if "w_Defects" in cur_dir:
-                                output_dict[i]["TP"] += 1
-                                self.logger.log_output(output, file_prefix + ".c", cur_dir, j, "TP")
-                            else:
-                                output_dict[i]["FP"] += 1
-                                self.logger.log_output(output, file_prefix + ".c", cur_dir, j, "FP")
-                        elif result == "TO":
-                            self.logger.log_output(output, file_prefix + ".c", cur_dir, j, "TO")
-                        else:
-                            self.logger.log_output(output, file_prefix + ".c", cur_dir, j, "NEG")
-
-
-
-        return output_dict
-
-    def get_name(self):
-        return self.name
-
 
     def __init__(self, benchmark_path, log_file_path):
+        self.pipeline = MakePipeline(benchmark_path)
+        self.name = "RVMatch"
+        self.logger = Logger(log_file_path, self.name)
+        self.output_dict = {}
+        self.tp_set = set([])
+        self.fp_set = set([])
+        self.neg_count = 0
         os.chdir(os.path.expanduser(benchmark_path))
 
-        #subprocess.check_call(["./bootstrap"])
-        #subprocess.check_call(["./configure", "CC=kcc", "LD=kcc", "CFLAGS=-flint"])
-        #compile_output = subprocess.check_call(["make", "-j4"], stderr=subprocess.STDOUT)
+    def run(self):
+        self.pipeline.build_benchmark(CC="kcc", CFLAGS="-flint", LD="kcc")
+        self.pipeline.run_bechmark(self, [], 2)
+        return self.output_dict
 
+    def get_output_dict(self):
+        return self.output_dict
 
-        self.info = Info()
-        self.benchmark_path = benchmark_path
-        self.name = "RV-Match"
-        self.logger = Logger(log_file_path, self.name)
+    def get_tp_set(self):
+        print len(self.tp_set)
+        return self.tp_set
 
-    def analyze(self):
-        Tool.analyze(self)
+    def get_fp_set(self):
+        print len(self.fp_set)
+        return self.fp_set
+
+    def analyze_output(self, exit_code, stdout, stderr, cur_dir, i, j):
+        output = stdout + stderr
+        if i not in self.output_dict:
+            self.output_dict[i] = {"count": 0, "TP": 0, "FP": 0}
+        self.output_dict[i]["count"] += 1
+        if self.check_output(output):
+            if "w_Defects" in cur_dir:
+                self.output_dict[i]["TP"] += 1
+                self.logger.log_output(output, i, cur_dir, j, "TP")
+                self.tp_set.add((i, j))
+            else:
+                self.output_dict[i]["FP"] += 1
+                self.logger.log_output(output, i, cur_dir, j, "FP")
+                self.fp_set.add((i, j))
+        else:
+            self.logger.log_output(output, i, cur_dir, j, "NEG")
+            self.neg_count += 1
+
+    def analyze_timeout(self, cur_dir, i, j):
+        if i not in self.output_dict:
+            self.output_dict[i] = {"count": 0, "TP": 0, "FP": 0}
+        self.output_dict[i]["count"] += 1
+        self.logger.log_output("", i, cur_dir, j, "NEG")
+        self.neg_count += 1
 
     def cleanup(self):
+        print "Numbers for " + self.name
+        print "Total Count = " + str(self.neg_count + len(self.tp_set) + len(self.fp_set))
+        print "TP Count = " + str(len(self.tp_set))
+        print "FP Count = " + str(len(self.fp_set))
+        print "Negatives Count = " + str(self.neg_count)
         Tool.cleanup(self)
         self.logger.close_log()

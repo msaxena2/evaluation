@@ -23,6 +23,7 @@ class Valgrind(Tool):
         self.output_dict = {}
         self.tp_set = set([])
         self.fp_set = set([])
+        self.neg_count = 0
         os.chdir(os.path.expanduser(benchmark_path))
 
     def run(self):

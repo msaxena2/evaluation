@@ -69,7 +69,6 @@ class TSan(Tool):
         self.neg_count += 1
 
     def cleanup(self):
-        print "Total Count= " + str(self.neg_count + len(self.tp_set) + len(self.fp_set))
-
+        print "Total Count = " + str(self.neg_count + len(self.tp_set) + len(self.fp_set))
         Tool.cleanup(self)
         self.logger.close_log()

@@ -12,7 +12,6 @@ from tools.itc_benchmark.a_san import ASan
 from tools.itc_benchmark.m_san import MSan
 from tools.itc_benchmark.rv_match import RVMatch
 from tools.itc_benchmark.frama_c import FramaC
-from tools.itc_benchmark.tis import TIS
 
 from tools.itc_benchmark.helgrind import Helgrind
 import utils.external_info
@@ -168,15 +167,18 @@ def tabulate_itc_criteria(tool_list, crunched_data):
 
     print tabulate(raw_table, headers=["Error", "True Positive Count", "False Positive Count", "Tests Run"])
 
+def run_single_tool(name, output_dict):
+    tabulate_itc_criteria([name], map(lambda x: crunch_data(x), [output_dict]))
 
 def run_itc_benchmark(log_location):
     global tools
-    tools = [MSan(path, log_location), UBSan(path, log_location), TSan(path, log_location), UBSan(path, log_location)]
+    tools = [FramaC(path, log_location)]
     output_dicts = map(lambda x: x.run(), tools)
     names_list = map(lambda x: x.get_name(), tools)
+    map(lambda x: run_single_tool(names_list[x], output_dicts[x]), xrange(0, len(output_dicts)))
     tp_tuple_set = reduce(lambda a, b: a | b, map(lambda x: x.get_tp_set(), tools), set([]))
     fp_tuple_set = reduce(lambda a, b: a | b, map(lambda x: x.get_fp_set(), tools), set([]))
-    tabulate_itc_criteria(names_list, map(lambda x: crunch_data(x), output_dicts))
+    #tabulate_itc_criteria(names_list, map(lambda x: crunch_data(x), output_dicts))
     tp_tuple_set = tp_tuple_set | utils.external_info.get_clang_warnings_set()
     data_list = [merge_data(tp_tuple_set, fp_tuple_set)]
     tabulate_itc_criteria(["+".join(names_list)], data_list)
